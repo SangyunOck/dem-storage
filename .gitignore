@@ -24,6 +24,7 @@ dist-ssr
 *.sw?
 
 # server gitignore
+database.db
 server/.DS_Store
 server/.idea/shelf
 server/confluence/target
