@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration
 import javax.sql.DataSource
 
 @Configuration
-class DemStorageConfiguration {
+class DatabaseConfiguration {
 
     /**
      * DataSourceBuilder는 HikariCP 의존성이 있어야 동작함.

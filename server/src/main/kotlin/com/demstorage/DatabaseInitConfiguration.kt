@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Configuration
 import javax.sql.DataSource
 
 @Configuration
-class DataInitializeConfiguration(dataSource: DataSource) {
+class DatabaseInitConfiguration(dataSource: DataSource) {
 
     init {
         val connection = dataSource.connection
