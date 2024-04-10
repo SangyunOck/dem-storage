@@ -37,11 +37,8 @@ dependencies {
 
     /**
      * [Logger 설정]
-     *
-     * Important note: kotlin-logging depends on slf4j-api (in the JVM artifact).
-     * In runtime, it is also required to depend on a logging implementation.
      */
-    // TBD
+    implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
 
     /**
      * [gRPC 설정]
