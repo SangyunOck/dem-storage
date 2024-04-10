@@ -1,0 +1,5 @@
+GRPC localhost:9090/MemberOperations/RegisterMember
+
+{
+  "peer_id": "peer_id_test"
+}
