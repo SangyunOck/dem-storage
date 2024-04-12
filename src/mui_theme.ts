@@ -7,6 +7,11 @@ export const mui_theme = createTheme({
         variant: "outlined",
       },
     },
+    MuiListItem: {
+      defaultProps: {
+        disablePadding: true,
+      },
+    },
     MuiCard: {
       defaultProps: {
         variant: "outlined",

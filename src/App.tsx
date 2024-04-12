@@ -1,45 +1,33 @@
-import { Grid, Paper, Box, List, ListItem, Link as MLink } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Container, Grid, Stack, Paper } from "@mui/material";
 
 import { useAppSelector } from "./redux/store.ts";
-import SideBar from "./components/SideBar.tsx";
-import FileListItem from "./components/FileListItem.tsx";
-import AddFileBtn from "./components/AddFileBtn.tsx";
+import FileUploadBtn from "./components/FileUploadBtn.tsx";
+import CompactList from "./components/CompactList.tsx";
+import FileBlock from "./components/FileBlock.tsx";
 
 function App() {
   const fileList = useAppSelector((state) => state.upload.value);
 
   return (
-    <Box sx={{ flexGrow: 1, height: "100vh" }}>
-      <Grid
-        container
-        p={2}
-        spacing={2}
-        flexWrap={"nowrap"}
-        sx={{ height: "inherit" }}
-      >
+    <Container maxWidth={false}>
+      <Grid container spacing={2} p={3}>
         <Grid item xs={"auto"}>
-          <SideBar />
+          <Paper>
+            <CompactList />
+          </Paper>
         </Grid>
         <Grid item xs>
-          <Paper sx={{ height: "100%" }}>
-            <List>
+          <Paper sx={{ width: "100%" }}>
+            <Stack p={2} spacing={1}>
               {fileList.map((item, idx) => (
-                <FileListItem key={idx} idx={idx} file={item} />
+                <FileBlock key={idx} idx={idx} file={item} />
               ))}
-              <ListItem>
-                <AddFileBtn />
-              </ListItem>
-              <ListItem>
-                <MLink component={Link} to={"/member/login"}>
-                  로그인
-                </MLink>
-              </ListItem>
-            </List>
+              <FileUploadBtn />
+            </Stack>
           </Paper>
         </Grid>
       </Grid>
-    </Box>
+    </Container>
   );
 }
 
