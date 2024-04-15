@@ -1,33 +1,39 @@
-import { Container, Grid, Stack, Paper } from "@mui/material";
+import { Grid, Paper, Box, List, ListItem } from "@mui/material";
 
 import { useAppSelector } from "./redux/store.ts";
-import FileUploadBtn from "./components/FileUploadBtn.tsx";
-import CompactList from "./components/CompactList.tsx";
-import FileBlock from "./components/FileBlock.tsx";
+import SideBar from "./components/SideBar.tsx";
+import FileListItem from "./components/FileListItem.tsx";
+import AddFileBtn from "./components/AddFileBtn.tsx";
 
 function App() {
   const fileList = useAppSelector((state) => state.upload.value);
 
   return (
-    <Container maxWidth={false}>
-      <Grid container spacing={2} p={3}>
+    <Box sx={{ flexGrow: 1, height: "100vh" }}>
+      <Grid
+        container
+        p={2}
+        spacing={2}
+        flexWrap={"nowrap"}
+        sx={{ height: "inherit" }}
+      >
         <Grid item xs={"auto"}>
-          <Paper>
-            <CompactList />
-          </Paper>
+          <SideBar />
         </Grid>
         <Grid item xs>
-          <Paper sx={{ width: "100%" }}>
-            <Stack p={2} spacing={1}>
+          <Paper sx={{ height: "100%" }}>
+            <List>
               {fileList.map((item, idx) => (
-                <FileBlock key={idx} idx={idx} file={item} />
+                <FileListItem key={idx} idx={idx} file={item} />
               ))}
-              <FileUploadBtn />
-            </Stack>
+              <ListItem>
+                <AddFileBtn />
+              </ListItem>
+            </List>
           </Paper>
         </Grid>
       </Grid>
-    </Container>
+    </Box>
   );
 }
 
