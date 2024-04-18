@@ -1,6 +1,8 @@
-use std::sync::Arc;
-use quinn::{Endpoint, ServerConfig};
 use eyre::Result;
+use quinn::{Endpoint, RecvStream, SendStream, ServerConfig};
+use std::future::Future;
+use std::sync::Arc;
+use tokio::task::JoinHandle;
 
 pub fn make_server(addr: &str) -> Result<(Endpoint, Vec<u8>)> {
     let addr = addr.parse()?;
@@ -20,4 +22,38 @@ fn configure_server() -> Result<(ServerConfig, Vec<u8>)> {
     transport_config.max_concurrent_uni_streams(0_u8.into());
 
     Ok((server_config, cert_der))
+}
+
+pub async fn spin_up_server<TxF, RxF, TxFut, RxFut>(
+    port: u16,
+    tx_task: TxF,
+    rx_task: RxF,
+) -> Result<JoinHandle<()>>
+where
+    TxF: Fn(SendStream) -> TxFut + Send + Sync + 'static,
+    RxF: Fn(RecvStream) -> RxFut + Send + Sync + 'static,
+    TxFut: Future<Output = ()> + Send + Sync + 'static,
+    RxFut: Future<Output = ()> + Send + Sync + 'static,
+{
+    let addr = format!("0.0.0.0:{port}");
+    let (ep, _) = make_server(&addr)?;
+    let handle = tokio::spawn(async move {
+        while let Ok(connection) = ep.accept().await.unwrap().await {
+            println!("accepting new client: {}", connection.remote_address());
+            let stream = connection.accept_bi().await;
+            match stream {
+                Err(e) => {
+                    println!("{:?}", e);
+                    break;
+                }
+                Ok((tx, rx)) => {
+                    let tx_handle = tokio::spawn(tx_task(tx));
+                    let rx_handle = tokio::spawn(rx_task(rx));
+                    let _ = tokio::join!(tx_handle, rx_handle);
+                }
+            };
+        }
+    });
+
+    Ok(handle)
 }

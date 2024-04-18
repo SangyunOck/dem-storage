@@ -1,7 +1,9 @@
+use eyre::Result;
+use quinn::{ClientConfig, Connection, Endpoint, RecvStream, SendStream};
+use std::future::Future;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use quinn::{ClientConfig, Endpoint, Connection, SendStream};
-use eyre::Result;
+use tokio::task::JoinHandle;
 
 struct SkipServerVerification;
 
@@ -45,9 +47,75 @@ pub async fn run_client(server_name: String, server_addr: String) -> Result<Conn
 
     Ok(connection)
 }
+pub async fn spin_up_client<TxF, RxF, TxFut, RxFut>(
+    server_name: String,
+    server_addr: String,
+    tx_task: TxF,
+    rx_task: RxF,
+) -> Result<JoinHandle<()>>
+where
+    TxF: Fn(SendStream) -> TxFut + Send + Sync + 'static,
+    RxF: Fn(RecvStream) -> RxFut + Send + Sync + 'static,
+    TxFut: Future<Output = ()> + Send + Sync + 'static,
+    RxFut: Future<Output = ()> + Send + Sync + 'static,
+{
+    let handle = tokio::spawn(async move {
+        let connection = run_client(server_name, server_addr).await.unwrap();
+        while let Ok((tx, rx)) = connection.open_bi().await {
+            // handle_request(tx).await;
+            let tx_handle = tokio::spawn(tx_task(tx));
+            let rx_handle = tokio::spawn(rx_task(rx));
+            let _ = tokio::join!(tx_handle, rx_handle);
+        }
+    });
 
-pub async fn handle_request(mut tx: SendStream) {
-    for i in 0..10 {
-        tx.write(b"abc").await.unwrap();
+    Ok(handle)
+}
+
+#[cfg(test)]
+mod client_test {
+    use crate::client::spin_up_client;
+    use crate::server::spin_up_server;
+
+    use std::time::Duration;
+
+    #[tokio::test]
+    async fn test_spin_up_client() -> eyre::Result<()> {
+        let server_handle = spin_up_server(
+            8080,
+            |mut tx| async move {
+                for i in 0..3 {
+                    let _ = tx.write(format!("{i}-abc").as_bytes()).await;
+                }
+            },
+            |mut rx| async move {
+                while let Ok(Some(msg)) = rx.read_chunk(5, true).await {
+                    println!("server: {:?}", msg);
+                }
+            },
+        )
+        .await?;
+
+        let client_handle = spin_up_client(
+            "local".to_string(),
+            "127.0.0.1:8080".to_string(),
+            |mut tx| async move {
+                for i in 0..3 {
+                    let _ = tx.write(format!("{i}-abc").as_bytes()).await;
+                }
+            },
+            |mut rx| async move {
+                while let Ok(Some(msg)) = rx.read_chunk(5, true).await {
+                    println!("client: {:?}", msg);
+                }
+            },
+        )
+        .await?;
+
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        server_handle.abort();
+        client_handle.abort();
+        Ok(())
     }
 }
