@@ -1,3 +1,5 @@
+mod fs;
+
 use eyre::Result;
 use quinn::{ClientConfig, Connection, Endpoint, RecvStream, SendStream};
 use std::future::Future;
@@ -62,9 +64,8 @@ where
     let handle = tokio::spawn(async move {
         let connection = run_client(server_name, server_addr).await.unwrap();
         while let Ok((tx, rx)) = connection.open_bi().await {
-            // handle_request(tx).await;
-            let tx_handle = tokio::spawn(tx_task(tx));
-            let rx_handle = tokio::spawn(rx_task(rx));
+            let tx_handle = tx_task(tx);
+            let rx_handle = rx_task(rx);
             let _ = tokio::join!(tx_handle, rx_handle);
         }
     });
@@ -77,11 +78,14 @@ mod client_test {
     use crate::client::spin_up_client;
     use crate::server::spin_up_server;
 
+    use crate::client::fs::encrypt_streaming;
+    use bytes::BytesMut;
     use std::time::Duration;
+    use tokio::io::AsyncReadExt;
 
     #[tokio::test]
     async fn test_spin_up_client() -> eyre::Result<()> {
-        let server_handle = spin_up_server(
+        let server_handle = tokio::spawn(spin_up_server(
             8080,
             |mut tx| async move {
                 for i in 0..3 {
@@ -89,20 +93,26 @@ mod client_test {
                 }
             },
             |mut rx| async move {
-                while let Ok(Some(msg)) = rx.read_chunk(5, true).await {
-                    println!("server: {:?}", msg);
+                let mut buf = BytesMut::with_capacity(4096);
+                loop {
+                    buf.clear();
+                    tokio::select! {
+                        Ok(n) = rx.read_buf(&mut buf) => {
+                            if n == 0 {
+                                break;
+                            }
+                            println!("{:?}", buf);
+                        }
+                    }
                 }
             },
-        )
-        .await?;
+        ));
 
         let client_handle = spin_up_client(
             "local".to_string(),
             "127.0.0.1:8080".to_string(),
-            |mut tx| async move {
-                for i in 0..3 {
-                    let _ = tx.write(format!("{i}-abc").as_bytes()).await;
-                }
+            |tx| async move {
+                encrypt_streaming(tx, [0; 32], [0; 12], "src/client.rs".to_string()).await;
             },
             |mut rx| async move {
                 while let Ok(Some(msg)) = rx.read_chunk(5, true).await {
