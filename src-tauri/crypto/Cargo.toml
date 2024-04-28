@@ -1,0 +1,11 @@
+[package]
+name = "crypto"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aes-gcm = "0.10.3"
+eyre = "0.6.12"
+tokio = { workspace = true }
+bytes = "1.6.0"
+async-channel = "2.2.1"

@@ -10,3 +10,5 @@ eyre = "0.6.12"
 rcgen = "0.12.1"
 tokio = { version = "1.37.0", features = ["full"] }
 async-channel = "2.2.1"
+bytes = "1.6.0"
+crypto = {path = "../crypto"}
