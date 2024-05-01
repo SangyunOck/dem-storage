@@ -5,6 +5,7 @@ val protobufPluginVersion = "0.9.4"
 val grpcVersion = "1.62.2"
 val protobufVersion = "3.25.3"
 val grpcSpringBootStarterVersion = "3.0.0.RELEASE"
+val exposedVersion = "0.49.0"
 plugins {
     id("org.springframework.boot") version "3.2.4"
     id("io.spring.dependency-management") version "1.1.4"
@@ -36,9 +37,22 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 
     /**
+     * [DB 설정]
+     */
+    // mysql
+    implementation("mysql:mysql-connector-java:8.0.33")
+    implementation("com.zaxxer:HikariCP")
+
+    // exposed
+    implementation("org.jetbrains.exposed:spring-transaction:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+
+    /**
      * [Logger 설정]
      */
-    implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
+    implementation("io.github.oshai:kotlin-logging-jvm:6.0.4")
 
     /**
      * [gRPC 설정]
