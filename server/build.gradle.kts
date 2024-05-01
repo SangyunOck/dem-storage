@@ -6,7 +6,6 @@ val grpcVersion = "1.62.2"
 val protobufVersion = "3.25.3"
 val grpcSpringBootStarterVersion = "3.0.0.RELEASE"
 val exposedVersion = "0.49.0"
-
 plugins {
     id("org.springframework.boot") version "3.2.4"
     id("io.spring.dependency-management") version "1.1.4"
@@ -40,8 +39,8 @@ dependencies {
     /**
      * [DB 설정]
      */
-    // sqlite
-    implementation("org.xerial:sqlite-jdbc")
+    // mysql
+    implementation("mysql:mysql-connector-java:8.0.33")
     implementation("com.zaxxer:HikariCP")
 
     // exposed
