@@ -15,4 +15,4 @@ COPY --from=builder /app/build/libs/server-0.0.1-SNAPSHOT.jar ./app.jar
 
 # 애플리케이션 실행 명령어
 EXPOSE 8080
-CMD ["java", "-jar", "app.jar"]
+CMD ["java", "-jar", "app.jar", "--spring.profiles.active=dev"]

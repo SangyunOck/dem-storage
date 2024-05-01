@@ -15,10 +15,10 @@ services:
       MYSQL_USERNAME: root
       MYSQL_ROOT_PASSWORD: password
       TZ: Asia/Seoul
-#  app: # 왜 안되는지 모르겠음 ㅜ
-#    image: dem-server:latest
-#    container_name: dem-server
-#    ports:
-#      - "8080:8080"
-#    depends_on:
-#      - db
+  app:
+    image: dem-server:latest
+    container_name: dem-server
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
