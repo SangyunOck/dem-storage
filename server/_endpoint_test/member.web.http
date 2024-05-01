@@ -1,0 +1,17 @@
+### 멤버 가입하기
+POST localhost:8080/api/member
+content-type: application/json
+
+{
+  "id": "test_id",
+  "password": "test_password"
+}
+
+### 로그인하기
+POST localhost:8080/api/member/login
+content-type: application/json
+
+{
+  "id": "test_id2",
+  "password": "test_password"
+}
