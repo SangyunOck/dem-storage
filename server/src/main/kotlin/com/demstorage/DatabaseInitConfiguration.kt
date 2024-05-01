@@ -23,6 +23,21 @@ class DatabaseInitConfiguration(dataSource: DataSource) {
                 )
                 """.trimIndent()
             )
+
+            /**
+             * Node 정보 테이블 생성
+             */
+            it.execute("DROP TABLE IF EXISTS node")
+            it.execute(
+                """
+                CREATE TABLE node (
+                    uuid varchar(255) PRIMARY KEY COMMENT '노드 아이디',
+                    ip_address varchar(255) NOT NULL COMMENT '노드 ip 주소',
+                    created_at datetime NOT NULL COMMENT '생성일시',
+                    updated_at datetime NOT NULL COMMENT '수정일시'
+                )
+                """.trimIndent()
+            )
         }
     }
 }
