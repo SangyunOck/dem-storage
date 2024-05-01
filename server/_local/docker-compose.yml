@@ -1,0 +1,24 @@
+# docker-compose up -d
+version: '3.7'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: dem-mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init_sql:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_HOST: localhost
+      MYSQL_PORT: 3306
+      MYSQL_USERNAME: root
+      MYSQL_ROOT_PASSWORD: password
+      TZ: Asia/Seoul
+#  app: # 왜 안되는지 모르겠음 ㅜ
+#    image: dem-server:latest
+#    container_name: dem-server
+#    ports:
+#      - "8080:8080"
+#    depends_on:
+#      - db
