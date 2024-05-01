@@ -9,11 +9,17 @@ class DatabaseInitConfiguration(dataSource: DataSource) {
     init {
         val connection = dataSource.connection
         connection.createStatement().use {
+            /**
+             * 회원 정보 테이블 생성
+             */
             it.execute("DROP TABLE IF EXISTS member")
             it.execute(
                 """
                 CREATE TABLE member (
-                    id varchar(36) PRIMARY KEY
+                    id varchar(50) PRIMARY KEY COMMENT '회원 아이디',
+                    password varchar(50) NOT NULL COMMENT '비밀번호',
+                    created_at datetime NOT NULL COMMENT '생성일시',
+                    updated_at datetime NOT NULL COMMENT '수정일시'
                 )
                 """.trimIndent()
             )

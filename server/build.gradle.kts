@@ -44,6 +44,7 @@ dependencies {
     implementation("com.zaxxer:HikariCP")
 
     // exposed
+    implementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
     implementation("org.jetbrains.exposed:spring-transaction:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
@@ -53,6 +54,12 @@ dependencies {
      * [Logger 설정]
      */
     implementation("io.github.oshai:kotlin-logging-jvm:6.0.4")
+
+    /**
+     * [HTTP API 설정]
+     */
+    implementation("org.springframework.boot:spring-boot-starter-web:3.2.5")
+    implementation("org.springframework:spring-web:6.1.6")
 
     /**
      * [gRPC 설정]

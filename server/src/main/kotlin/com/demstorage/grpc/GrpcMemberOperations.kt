@@ -1,6 +1,5 @@
 package com.demstorage.grpc
 
-import com.demstorage.member.domain.MemberId
 import com.demstorage.member.service.MemberOperations
 import com.demstorage.stubs.MemberOperationsGrpc
 import com.demstorage.stubs.RegisterMemberRequest
@@ -9,6 +8,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.grpc.stub.StreamObserver
 import net.devh.boot.grpc.server.service.GrpcService
 
+// TODO grpc는 내부 클라이언트와 사용하는 프로토콜. 추후 삭제
 @GrpcService
 class GrpcMemberOperations(
     private val memberOperations: MemberOperations,
@@ -19,11 +19,6 @@ class GrpcMemberOperations(
         responseObserver: StreamObserver<RegisterMemberResponse>
     ) {
         logger.info { "register member, request: $request" }
-
-        memberOperations.create(
-            id = MemberId(request.peerId)
-        )
-
         val response = RegisterMemberResponse.newBuilder().build()
         responseObserver.onNext(response)
         responseObserver.onCompleted()
