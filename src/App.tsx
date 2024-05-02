@@ -1,4 +1,5 @@
-import { Grid, Paper, Box, List, ListItem } from "@mui/material";
+import { Grid, Paper, Box, List, ListItem, Link as MLink } from "@mui/material";
+import { Link } from "react-router-dom";
 
 import { useAppSelector } from "./redux/store.ts";
 import SideBar from "./components/SideBar.tsx";
@@ -28,6 +29,11 @@ function App() {
               ))}
               <ListItem>
                 <AddFileBtn />
+              </ListItem>
+              <ListItem>
+                <MLink component={Link} to={"/member/login"}>
+                  로그인
+                </MLink>
               </ListItem>
             </List>
           </Paper>
