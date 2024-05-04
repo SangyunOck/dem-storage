@@ -1,4 +1,4 @@
-use crate::types::{Command, InitSecret, Protocol, Upload};
+use crate::types::{Command, UploadCmd, Protocol, Upload, Download};
 use std::path::Path;
 
 use async_channel::{unbounded, Receiver, Sender};
@@ -13,19 +13,18 @@ pub async fn handle_command(cmd: Command, tx: Sender<Vec<u8>>) {
             if let Err(e) = tx.send(serialized_init_msg).await {
                 println!("cannot send init msg: {e}");
             }
-        }
-        Command::InitSecret(init_secret) => {
-            let file_path = Path::new(&init_secret.file_path);
-            let (_, cipher_rx) = handle_init_secret(init_secret.clone()).await;
+        },
+        Command::Upload(upload_cmd) => {
+            let file_path = Path::new(&upload_cmd.file_path);
+            let (_, cipher_rx) = handle_init_secret(upload_cmd.clone()).await;
             let file_name = file_path.file_name().unwrap().to_str().unwrap();
 
             while let Ok(data) = cipher_rx.recv().await {
                 let upload_msg = Protocol::Upload(Upload {
-                    peer_id: init_secret.peer_id.clone(),
+                    peer_id: upload_cmd.peer_id.clone(),
                     file_name: file_name.to_string(),
                     data,
-                    index: init_secret.index,
-                    next: !cipher_rx.is_closed(),
+                    index: upload_cmd.index,
                 });
                 if let Err(e) = tx.send(serde_json::to_vec(&upload_msg).unwrap()).await {
                     println!("cannot send cipher msg: {e}");
@@ -33,11 +32,21 @@ pub async fn handle_command(cmd: Command, tx: Sender<Vec<u8>>) {
                 }
             }
         }
+        Command::Download(download_cmd) => {
+            let download_msg = Protocol::Download(Download {
+                peer_id: download_cmd.peer_id,
+                file_name: download_cmd.file_name,
+            });
+
+            if let Err(e) = tx.send(serde_json::to_vec(&download_msg).unwrap()).await {
+                println!("cannot send download msg: {e}");
+            }
+        }
     }
 }
 
 async fn handle_init_secret(
-    init_secret: InitSecret,
+    init_secret: UploadCmd,
 ) -> (JoinHandle<eyre::Result<()>>, Receiver<Vec<u8>>) {
     let password = init_secret.password;
     let password_length = password.len();

@@ -5,6 +5,7 @@ pub enum Protocol {
     Init(Init),
     InitAck(InitAck),
     Upload(Upload),
+    Download(Download),
     Abort,
 }
 
@@ -24,7 +25,7 @@ pub struct Init {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InitSecret {
+pub struct UploadCmd {
     pub peer_id: String,
     pub password: String,
     pub file_path: String,
@@ -43,11 +44,23 @@ pub struct Upload {
     pub file_name: String,
     pub data: Vec<u8>,
     pub index: u8,
-    pub next: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Download {
+    pub peer_id: String,
+    pub file_name: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DownloadCmd {
+    pub peer_id: String,
+    pub file_name: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Command {
     Init(Init),
-    InitSecret(InitSecret),
+    Upload(UploadCmd),
+    Download(DownloadCmd)
 }

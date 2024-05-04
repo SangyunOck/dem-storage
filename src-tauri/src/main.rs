@@ -6,7 +6,7 @@ use p2p::client::handler as client_handler;
 use p2p::client::spin_up_client;
 use p2p::server::handler as server_handler;
 use p2p::server::spin_up_server;
-use p2p::types::{Command, Init, InitSecret};
+use p2p::types::{Command, Init, UploadCmd};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -54,10 +54,10 @@ async fn main() -> eyre::Result<()> {
         .await;
 
     let _ = cmd_tx
-        .send(Command::InitSecret(InitSecret {
+        .send(Command::Upload(UploadCmd {
             peer_id: "id".to_string(),
             password: "password".to_string(),
-            file_path: "src/main.rs".to_string(),
+            file_path: "/Users/sangyun/Documents/workspace/dem-storage/src-tauri/src/main.rs".to_string(),
             offset: 0,
             index: 0,
         }))
