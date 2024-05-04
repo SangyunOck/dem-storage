@@ -2,11 +2,11 @@ use crate::types::{Download, DownloadReq, DownloadResp, Protocol, Upload, Upload
 
 use async_channel::{unbounded, Receiver, Sender};
 use crypto::fs::stream_cipher;
+use crypto::{decrypt_aes256gcm, split_password};
 use std::path::Path;
 use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
 use tokio::task::JoinHandle;
-use crypto::{decrypt_aes256gcm, split_password};
 
 pub async fn handle_upload_cmd(upload_req: UploadReq, tx: Sender<Vec<u8>>) {
     let file_path = Path::new(&upload_req.file_path);
@@ -56,7 +56,10 @@ pub async fn handle_download_cmd(download_cmd: DownloadReq, tx: Sender<Vec<u8>>)
 
 pub async fn handle_download_resp(download_resp: DownloadResp, password: &str) -> eyre::Result<()> {
     let base_path = std::env::var("BASE_PATH").unwrap_or(".".to_string());
-    let file_path = format!("{}/{}-{}", base_path, download_resp.file_name, download_resp.index);
+    let file_path = format!(
+        "{}/{}-{}",
+        base_path, download_resp.file_name, download_resp.index
+    );
 
     let mut file = if Path::new(&file_path).is_file() {
         OpenOptions::new().append(true).open(&file_path).await?

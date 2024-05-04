@@ -78,7 +78,7 @@ where
                         e = connection.closed() => {
                             tx_handle.abort();
                             rx_handle.abort();
-                            println!("connection closed{:?}", e);
+                            println!("connection closed: {:?}", e);
                         }
                     }
                 }
