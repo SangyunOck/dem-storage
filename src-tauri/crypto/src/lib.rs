@@ -4,7 +4,7 @@ use aes_gcm::aead::{Aead, Nonce};
 use aes_gcm::{Aes256Gcm, Key, KeyInit};
 use eyre::eyre;
 
-fn encrypt_aes256gcm(
+pub fn encrypt_aes256gcm(
     key: [u8; 32],
     nonce: [u8; 12],
     plain_text: impl AsRef<[u8]>,
@@ -17,7 +17,7 @@ fn encrypt_aes256gcm(
     Ok(cipher_text)
 }
 
-fn decrypt_aes256gcm(
+pub fn decrypt_aes256gcm(
     key: [u8; 32],
     nonce: [u8; 12],
     cipher_text: impl AsRef<[u8]>,

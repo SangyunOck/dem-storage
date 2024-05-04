@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "p2p",
-    "crypto"
+    "crypto",
+    "p2p"
 ]
 
 [workspace.dependencies]
@@ -18,12 +18,13 @@ edition = "2021"
 tauri-build = { version = "1", features = [] }
 
 [dependencies]
-tauri = { version = "1", features = ["shell-open"] }
+async-channel = "2.2.1"
+eyre = "0.6.12"
+p2p = { path = "p2p" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-p2p = { path = "p2p" }
+tauri = { version = "1", features = ["shell-open"] }
 tokio = { workspace = true }
-async-channel = "2.2.1"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
