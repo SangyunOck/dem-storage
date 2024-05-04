@@ -1,13 +1,15 @@
-use crate::client::command_service::handle_command;
+use crate::client::command_service::{
+    handle_download_cmd, handle_download_resp, handle_upload_cmd,
+};
+use crate::consts::BUF_SIZE;
 use crate::types::{Command, Protocol};
-use std::time::Duration;
 
 use async_channel::{Receiver, Sender};
 use bytes::BytesMut;
 use quinn::{RecvStream, SendStream};
+use std::collections::BTreeMap;
+use std::time::Duration;
 use tokio::io::AsyncReadExt;
-
-const BUF_SIZE: usize = 8192;
 
 pub async fn handle_incoming_stream(
     mut recv_stream: RecvStream,
@@ -15,15 +17,21 @@ pub async fn handle_incoming_stream(
     cmd_rx: Receiver<Command>,
 ) {
     let mut buf = BytesMut::with_capacity(BUF_SIZE);
-
-    // init client
-    // run only once
-    if let Ok(cmd) = cmd_rx.recv().await {
-        handle_command(cmd, resp_tx.clone()).await;
-    }
+    let mut download_reqs = BTreeMap::new();
 
     loop {
         tokio::select! {
+            Ok(cmd) = cmd_rx.recv() => {
+                match cmd {
+                    Command::Upload(upload) => {
+                        handle_upload_cmd(upload, resp_tx.clone()).await;
+                    },
+                    Command::DownloadReq(download) => {
+                        handle_download_cmd(download.clone(), resp_tx.clone()).await;
+                        download_reqs.insert(format!("{}-{}", download.file_name, download.index), download);
+                    }
+                }
+            },
             Ok(n) = recv_stream.read_buf(&mut buf) => {
                 if n == 0 {
                      println!("broken pipe");
@@ -31,11 +39,11 @@ pub async fn handle_incoming_stream(
                 }
                 if let Ok(msg) = serde_json::from_slice::<Protocol>(&buf) {
                     match msg {
-                        Protocol::InitAck(init_ack) => {
-                            println!("{:?}", init_ack);
-                            if let Ok(cmd) = cmd_rx.recv().await {
-                                handle_command(cmd, resp_tx.clone()).await;
+                        Protocol::DownloadResp(download_resp) => {
+                            if let Some(download_req) = download_reqs.remove(&format!("{}-{}", download_resp.file_name, download_resp.index)) {
+                                let _ = handle_download_resp(download_resp, &download_req.password).await;
                             }
+                            buf.clear();
                         },
                         Protocol::Abort => break,
                         _ => println!("invalid message"),

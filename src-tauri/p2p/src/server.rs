@@ -3,9 +3,10 @@ mod service;
 
 use async_channel::{unbounded, Receiver, Sender};
 use eyre::Result;
-use quinn::{Endpoint, RecvStream, SendStream, ServerConfig};
+use quinn::{Endpoint, RecvStream, SendStream, ServerConfig, VarInt};
 use std::future::Future;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::task::JoinHandle;
 
 pub fn make_server(addr: &str) -> Result<(Endpoint, Vec<u8>)> {
@@ -24,7 +25,8 @@ fn configure_server() -> Result<(ServerConfig, Vec<u8>)> {
 
     let mut server_config = ServerConfig::with_single_cert(cert_chain, priv_key)?;
     let transport_config = Arc::get_mut(&mut server_config.transport).unwrap();
-    transport_config.max_concurrent_uni_streams(0_u8.into());
+    transport_config.max_concurrent_bidi_streams(VarInt::from_u32(10_000));
+    transport_config.keep_alive_interval(Some(Duration::from_secs(5)));
 
     Ok((server_config, cert_der))
 }

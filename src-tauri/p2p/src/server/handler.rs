@@ -1,12 +1,12 @@
-use crate::server::service::{handle_init_msg, handle_upload_msg};
+use crate::consts::BUF_SIZE;
+use crate::server::service::{handle_download_msg, handle_upload_msg};
 use crate::types::Protocol;
 
 use async_channel::{Receiver, Sender};
 use bytes::BytesMut;
 use quinn::{RecvStream, SendStream, VarInt};
+use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-
-const BUF_SIZE: usize = 8192;
 
 pub async fn handle_incoming_stream(
     mut recv_stream: RecvStream,
@@ -22,23 +22,22 @@ pub async fn handle_incoming_stream(
                     let _ = recv_stream.stop(VarInt::from_u32(1));
                     break;
                 } else if let Ok(msg) = serde_json::from_slice::<Protocol>(&buf) {
-                        match msg {
-                            Protocol::Init(init) => {
-                                let resp = handle_init_msg(init).await;
-                                let _ = tx.send(resp).await;
-                                buf.clear();
-                            },
-                            Protocol::Upload(upload) => {
-                                handle_upload_msg(upload, storage_path.clone()).await;
-                                buf.clear();
-                            },
-                            Protocol::Abort => {
-                                buf.clear();
-                                break
-                            },
-                            _ => println!("invalid message"),
-                        }
+                    match msg {
+                        Protocol::Upload(upload) => {
+                            drop(tokio::spawn(handle_upload_msg(upload, storage_path.clone())));
+                            buf.clear();
+                        },
+                        Protocol::Download(download) => {
+                            drop(tokio::spawn(handle_download_msg(download, storage_path.clone(), tx.clone())));
+                            buf.clear();
+                        },
+                        Protocol::Abort => {
+                            buf.clear();
+                            break
+                        },
+                        _ => println!("invalid message"),
                     }
+                }
             },
             _ = tokio::task::yield_now() => {}
         }
@@ -49,6 +48,7 @@ pub async fn handle_outgoing_stream(mut send_stream: SendStream, rx: Receiver<Ve
     loop {
         tokio::select! {
             Ok(msg) = rx.recv() => {
+                tokio::time::sleep(Duration::from_millis(10)).await;
                 if let Err(e) = send_stream.write_buf(&mut msg.as_slice()).await {
                     println!("cannot write to server stream: {}", e);
                     break;
