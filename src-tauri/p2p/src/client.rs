@@ -1,5 +1,9 @@
-mod fs;
+mod command_service;
+pub mod handler;
 
+use crate::types::Command;
+
+use async_channel::{unbounded, Receiver, Sender};
 use eyre::Result;
 use quinn::{ClientConfig, Connection, Endpoint, RecvStream, SendStream};
 use std::future::Future;
@@ -40,7 +44,7 @@ fn configure_client() -> Result<ClientConfig> {
 }
 
 pub async fn run_client(server_name: String, server_addr: String) -> Result<Connection> {
-    let client_addr = "127.0.0.1:0".parse()?;
+    let client_addr = "0.0.0.0:0".parse()?;
     let server_addr = server_addr.parse()?;
     let client_ep = make_client_endpoint(client_addr)?;
     let connect = client_ep.connect(server_addr, &server_name)?;
@@ -54,78 +58,36 @@ pub async fn spin_up_client<TxF, RxF, TxFut, RxFut>(
     server_addr: String,
     tx_task: TxF,
     rx_task: RxF,
+    cmd_rx: Receiver<Command>,
 ) -> Result<JoinHandle<()>>
 where
-    TxF: Fn(SendStream) -> TxFut + Send + Sync + 'static,
-    RxF: Fn(RecvStream) -> RxFut + Send + Sync + 'static,
+    TxF: Fn(SendStream, Receiver<Vec<u8>>) -> TxFut + Send + Sync + 'static,
+    RxF: Fn(RecvStream, Sender<Vec<u8>>, Receiver<Command>) -> RxFut + Send + Sync + 'static,
     TxFut: Future<Output = ()> + Send + Sync + 'static,
     RxFut: Future<Output = ()> + Send + Sync + 'static,
 {
     let handle = tokio::spawn(async move {
-        let connection = run_client(server_name, server_addr).await.unwrap();
-        while let Ok((tx, rx)) = connection.open_bi().await {
-            let tx_handle = tx_task(tx);
-            let rx_handle = rx_task(rx);
-            let _ = tokio::join!(tx_handle, rx_handle);
+        if let Ok(connection) = run_client(server_name.clone(), server_addr.clone()).await {
+            match connection.open_bi().await {
+                Ok((tx_stream, rx_stream)) => {
+                    let (msg_tx, msg_rx) = unbounded();
+                    let tx_handle = tokio::spawn(tx_task(tx_stream, msg_rx));
+                    let rx_handle = tokio::spawn(rx_task(rx_stream, msg_tx, cmd_rx));
+
+                    tokio::select! {
+                        e = connection.closed() => {
+                            tx_handle.abort();
+                            rx_handle.abort();
+                            println!("connection closed{:?}", e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    println!("failed to open bi-direct connection: {e}");
+                }
+            }
         }
     });
 
     Ok(handle)
-}
-
-#[cfg(test)]
-mod client_test {
-    use crate::client::spin_up_client;
-    use crate::server::spin_up_server;
-
-    use crate::client::fs::encrypt_streaming;
-    use bytes::BytesMut;
-    use std::time::Duration;
-    use tokio::io::AsyncReadExt;
-
-    #[tokio::test]
-    async fn test_spin_up_client() -> eyre::Result<()> {
-        let server_handle = tokio::spawn(spin_up_server(
-            8080,
-            |mut tx| async move {
-                for i in 0..3 {
-                    let _ = tx.write(format!("{i}-abc").as_bytes()).await;
-                }
-            },
-            |mut rx| async move {
-                let mut buf = BytesMut::with_capacity(4096);
-                loop {
-                    buf.clear();
-                    tokio::select! {
-                        Ok(n) = rx.read_buf(&mut buf) => {
-                            if n == 0 {
-                                break;
-                            }
-                            println!("{:?}", buf);
-                        }
-                    }
-                }
-            },
-        ));
-
-        let client_handle = spin_up_client(
-            "local".to_string(),
-            "127.0.0.1:8080".to_string(),
-            |tx| async move {
-                encrypt_streaming(tx, [0; 32], [0; 12], "src/client.rs".to_string()).await;
-            },
-            |mut rx| async move {
-                while let Ok(Some(msg)) = rx.read_chunk(5, true).await {
-                    println!("client: {:?}", msg);
-                }
-            },
-        )
-        .await?;
-
-        tokio::time::sleep(Duration::from_secs(1)).await;
-
-        server_handle.abort();
-        client_handle.abort();
-        Ok(())
-    }
 }
