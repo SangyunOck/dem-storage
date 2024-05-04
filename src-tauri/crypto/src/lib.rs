@@ -4,6 +4,8 @@ use aes_gcm::aead::{Aead, Nonce};
 use aes_gcm::{Aes256Gcm, Key, KeyInit};
 use eyre::eyre;
 
+pub const AES_GCM_TAG_SIZE: usize = 16;
+
 pub fn encrypt_aes256gcm(
     key: [u8; 32],
     nonce: [u8; 12],
@@ -28,6 +30,21 @@ pub fn decrypt_aes256gcm(
         .decrypt(&nonce, cipher_text.as_ref())
         .map_err(|e| eyre!("cannot decrypt cipher text: {e}"))?;
     Ok(plain_text)
+}
+
+pub fn split_password(password: &str) -> ([u8; 12], [u8; 32]) {
+    let password_length = password.len();
+    let mut nonce = [0_u8; 12];
+    let target_len = password_length.min(nonce.len());
+    let nonce_bytes = &password.as_bytes()[..target_len];
+    nonce[..target_len].copy_from_slice(nonce_bytes);
+
+    let mut key = [0_u8; 32];
+    let target_len = password_length.min(key.len());
+    let key_bytes = &password.as_bytes()[..target_len];
+    key[..target_len].copy_from_slice(key_bytes);
+
+    (nonce, key)
 }
 
 #[cfg(test)]
