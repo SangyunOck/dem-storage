@@ -6,8 +6,8 @@ use crate::types::{Command, Protocol};
 
 use async_channel::{Receiver, Sender};
 use bytes::BytesMut;
+use moka::future::CacheBuilder;
 use quinn::{RecvStream, SendStream};
-use std::collections::BTreeMap;
 use std::time::Duration;
 use tokio::io::AsyncReadExt;
 
@@ -17,7 +17,10 @@ pub async fn handle_incoming_stream(
     cmd_rx: Receiver<Command>,
 ) {
     let mut buf = BytesMut::with_capacity(BUF_SIZE);
-    let mut download_reqs = BTreeMap::new();
+    let download_reqs = CacheBuilder::new(10_000)
+        .time_to_live(Duration::from_secs(60 * 60 * 5))
+        .time_to_idle(Duration::from_secs(60 * 60 * 5))
+        .build();
 
     loop {
         tokio::select! {
@@ -28,7 +31,7 @@ pub async fn handle_incoming_stream(
                     },
                     Command::DownloadReq(download) => {
                         handle_download_cmd(download.clone(), resp_tx.clone()).await;
-                        download_reqs.insert(format!("{}-{}", download.file_name, download.index), download);
+                        download_reqs.insert(format!("{}-{}", download.file_name, download.index), download).await;
                     }
                 }
             },
@@ -40,7 +43,13 @@ pub async fn handle_incoming_stream(
                 if let Ok(msg) = serde_json::from_slice::<Protocol>(&buf) {
                     match msg {
                         Protocol::DownloadResp(download_resp) => {
-                            if let Some(download_req) = download_reqs.remove(&format!("{}-{}", download_resp.file_name, download_resp.index)) {
+                            if let Some(download_req) = download_reqs
+                                .get(&format!(
+                                    "{}-{}",
+                                    download_resp.file_name, download_resp.index
+                                ))
+                                .await
+                            {
                                 let _ = handle_download_resp(download_resp, &download_req.password).await;
                             }
                             buf.clear();
