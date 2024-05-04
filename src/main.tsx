@@ -10,6 +10,7 @@ import App from "./App";
 import Login, { loginAction } from "./routes/Login.tsx";
 import Signup, { signupAction } from "./routes/Signup.tsx";
 import MemberLayout from "./layouts/MemberLayout.tsx";
+import NewMember from "./routes/NewMember.tsx";
 
 const router = createBrowserRouter([
   {
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
         path: "signup",
         element: <Signup />,
         action: signupAction,
+      },
+      {
+        path: "new",
+        element: <NewMember />,
       },
     ],
   },
