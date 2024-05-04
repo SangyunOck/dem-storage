@@ -1,7 +1,7 @@
 use async_channel::Sender;
-use bytes::BytesMut;
+use std::io::SeekFrom;
 use tokio::fs::OpenOptions;
-use tokio::io::AsyncReadExt;
+use tokio::io::{AsyncReadExt, AsyncSeekExt};
 
 const BUF_SIZE: usize = 8192;
 
@@ -9,31 +9,35 @@ pub async fn stream_cipher(
     key: [u8; 32],
     nonce: [u8; 12],
     file_path: String,
+    offset: u64,
     cipher_tx: Sender<Vec<u8>>,
 ) -> eyre::Result<()> {
-    let mut buf = BytesMut::with_capacity(BUF_SIZE);
+    let mut buf = [0; BUF_SIZE];
 
     let mut file = OpenOptions::new().read(true).open(file_path).await?;
+    file.seek(SeekFrom::Start(offset)).await?;
     loop {
-        buf.clear();
         tokio::select! {
-            Ok(n) = file.read_buf(&mut buf) => {
+            Ok(n) = file.read(&mut buf) => {
                 if n == 0 {
                     break;
                 }
-                match super::encrypt_aes256gcm(key, nonce, &buf) {
-                    Ok(cipher) => {
-                        if let Err(e) = cipher_tx.send(cipher).await {
-                            println!("cannot send encypted file: {e}");
+                else {
+                    match super::encrypt_aes256gcm(key, nonce, &buf[..n]) {
+                        Ok(cipher) => {
+                            if let Err(e) = cipher_tx.send(cipher).await {
+                                println!("cannot send encypted file: {e}");
+                                break;
+                            }
+                        },
+                        Err(e) => {
+                            println!("error: {e}");
                             break;
                         }
-                    },
-                    Err(e) => {
-                        println!("error: {e}");
-                        break;
                     }
                 }
-            }
+            },
+            _ = tokio::task::yield_now() => {}
         }
     }
 
@@ -55,6 +59,7 @@ mod test_crypto_fs {
             [0; 32],
             [0; 12],
             "src/lib.rs".to_string(),
+            0,
             tx,
         )));
         while let Ok(msg) = rx.recv().await {
