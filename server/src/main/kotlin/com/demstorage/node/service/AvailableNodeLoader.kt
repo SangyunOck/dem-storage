@@ -28,6 +28,7 @@ class StandardAvailableNodeLoader(
         val nodes = nodeOperations.findAll()
         if (nodes.isEmpty()) return emptyList()
 
+        // Todo 이 호출이 너무 느리면 비동기 처리하도록 변경
         val availableNodes = nodes.mapNotNull { node ->
             val channel = buildChannel(node.ipAddress)
             val stub = NodeOperationsGrpc.newBlockingStub(channel)
