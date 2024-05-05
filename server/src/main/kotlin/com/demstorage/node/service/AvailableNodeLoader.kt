@@ -9,7 +9,7 @@ import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 
 interface AvailableNodeLoader {
-    fun load(): List<Node>
+    fun load(limit: Int): List<Node>
 }
 
 class StandardAvailableNodeLoader(
@@ -24,7 +24,7 @@ class StandardAvailableNodeLoader(
             .build()
     }
 
-    override fun load(): List<Node> {
+    override fun load(limit: Int): List<Node> {
         val nodes = nodeOperations.findAll()
         if (nodes.isEmpty()) return emptyList()
 
@@ -45,6 +45,6 @@ class StandardAvailableNodeLoader(
             }.getOrNull()
         }
 
-        return availableNodes
+        return availableNodes.shuffled().take(limit)
     }
 }
