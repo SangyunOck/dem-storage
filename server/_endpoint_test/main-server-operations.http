@@ -1,0 +1,6 @@
+GRPC localhost:9090/MainServerOperations/RegisterNode
+
+{
+  "node_ip": "127.0.0.1",
+  "peer_id": "12314"
+}

@@ -1,8 +1,9 @@
 package com.demstorage.grpc
 
 import com.demstorage.node.domain.NodeIpAddress
+import com.demstorage.node.domain.NodePeerId
 import com.demstorage.node.service.NodeOperations
-import com.demstorage.stubs.NodeOperationsGrpc
+import com.demstorage.stubs.MainServerOperationsGrpc
 import com.demstorage.stubs.RegisterNodeRequest
 import com.demstorage.stubs.RegisterNodeResponse
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -12,7 +13,7 @@ import net.devh.boot.grpc.server.service.GrpcService
 @GrpcService
 class GrpcNodeService(
     private val nodeOperations: NodeOperations,
-) : NodeOperationsGrpc.NodeOperationsImplBase() {
+) : MainServerOperationsGrpc.MainServerOperationsImplBase() {
 
     private val logger = KotlinLogging.logger {}
     override fun registerNode(
@@ -22,12 +23,12 @@ class GrpcNodeService(
 
         logger.info { "register node, request: $request" }
 
-        val nodeUUID = nodeOperations.register(NodeIpAddress(request.nodeIp))
+        nodeOperations.register(
+            ipAddress = NodeIpAddress(request.nodeIp),
+            peerId = NodePeerId(request.peerId)
+        )
 
-        val response = RegisterNodeResponse.newBuilder()
-            .setNodeUuid(nodeUUID.value)
-            .setNodeIp(request.nodeIp)
-            .build()
+        val response = RegisterNodeResponse.newBuilder().build()
         responseObserver.onNext(response)
         responseObserver.onCompleted()
     }
