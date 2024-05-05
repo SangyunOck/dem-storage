@@ -23,6 +23,7 @@ pub struct Upload {
     pub peer_id: String,
     pub file_name: String,
     pub data: Vec<u8>,
+    pub offset: u64,
     pub index: u8,
 }
 
@@ -30,6 +31,7 @@ pub struct Upload {
 pub struct Download {
     pub peer_id: String,
     pub file_name: String,
+    pub chunk_offset: u64,
     pub index: u8,
 }
 
@@ -38,6 +40,7 @@ pub struct DownloadReq {
     pub peer_id: String,
     pub file_name: String,
     pub index: u8,
+    pub chunk_offset: u64,
     pub password: String,
 }
 
@@ -45,6 +48,8 @@ pub struct DownloadReq {
 pub struct DownloadResp {
     pub file_name: String,
     pub data: Vec<u8>,
+    pub chunk_offset: u64,
+    pub offset: u64,
     pub index: u8,
 }
 
@@ -61,9 +66,11 @@ pub struct Node {
 }
 #[derive(Debug, Clone)]
 pub struct Chunk {
+    pub file_path: String,
     pub chunk_size: u64,
     pub offset: u64,
-    pub index: u64,
+    pub index: u8,
+    pub total_size: u64,
 }
 
 #[derive(Debug, Clone)]
