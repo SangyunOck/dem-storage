@@ -1,7 +1,5 @@
-use crate::client::command_service::{
-    handle_download_cmd, handle_download_resp, handle_upload_cmd,
-};
-use crate::consts::BUF_SIZE;
+use crate::client::service::{handle_download_cmd, handle_download_resp, handle_upload_cmd};
+use crate::consts::BUFF_SIZE;
 use crate::types::{Command, Protocol};
 
 use async_channel::{Receiver, Sender};
@@ -16,10 +14,10 @@ pub async fn handle_incoming_stream(
     resp_tx: Sender<Vec<u8>>,
     cmd_rx: Receiver<Command>,
 ) {
-    let mut buf = BytesMut::with_capacity(BUF_SIZE);
+    let mut buf = BytesMut::with_capacity(BUFF_SIZE);
     let download_reqs = CacheBuilder::new(10_000)
-        .time_to_live(Duration::from_secs(60 * 60 * 5))
-        .time_to_idle(Duration::from_secs(60 * 60 * 5))
+        .time_to_live(Duration::from_secs(60 * 60 * 12))
+        .time_to_idle(Duration::from_secs(60 * 60 * 12))
         .build();
 
     loop {
@@ -27,7 +25,12 @@ pub async fn handle_incoming_stream(
             Ok(cmd) = cmd_rx.recv() => {
                 match cmd {
                     Command::Upload(upload) => {
-                        handle_upload_cmd(upload, resp_tx.clone()).await;
+                        let resp_tx = resp_tx.clone();
+                        drop(tokio::spawn(async move {
+                            if let Err(e) = handle_upload_cmd(upload, resp_tx).await {
+                                println!("failed to upload: {e}");
+                            }
+                        }));
                     },
                     Command::DownloadReq(download) => {
                         handle_download_cmd(download.clone(), resp_tx.clone()).await;
@@ -50,7 +53,11 @@ pub async fn handle_incoming_stream(
                                 ))
                                 .await
                             {
-                                let _ = handle_download_resp(download_resp, &download_req.password).await;
+                                drop(tokio::spawn(async move {
+                                    if let Err(e) = handle_download_resp(download_resp, &download_req.password).await {
+                                        println!("client - download failed: {e}");
+                                    }
+                                }));
                             }
                             buf.clear();
                         },

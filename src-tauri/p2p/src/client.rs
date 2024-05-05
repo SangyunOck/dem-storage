@@ -1,5 +1,5 @@
-mod command_service;
 pub mod handler;
+mod service;
 
 use crate::types::Command;
 

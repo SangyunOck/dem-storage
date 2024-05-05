@@ -14,6 +14,7 @@ pub struct UploadReq {
     pub password: String,
     pub file_path: String,
     pub offset: u64,
+    pub limit: u64,
     pub index: u8,
 }
 
@@ -22,6 +23,7 @@ pub struct Upload {
     pub peer_id: String,
     pub file_name: String,
     pub data: Vec<u8>,
+    pub offset: u64,
     pub index: u8,
 }
 
@@ -29,6 +31,7 @@ pub struct Upload {
 pub struct Download {
     pub peer_id: String,
     pub file_name: String,
+    pub chunk_offset: u64,
     pub index: u8,
 }
 
@@ -37,6 +40,7 @@ pub struct DownloadReq {
     pub peer_id: String,
     pub file_name: String,
     pub index: u8,
+    pub chunk_offset: u64,
     pub password: String,
 }
 
@@ -44,6 +48,8 @@ pub struct DownloadReq {
 pub struct DownloadResp {
     pub file_name: String,
     pub data: Vec<u8>,
+    pub chunk_offset: u64,
+    pub offset: u64,
     pub index: u8,
 }
 
@@ -51,4 +57,24 @@ pub struct DownloadResp {
 pub enum Command {
     Upload(UploadReq),
     DownloadReq(DownloadReq),
+}
+
+#[derive(Debug, Clone)]
+pub struct Node {
+    pub endpoint: String,
+    pub peer_id: String,
+}
+#[derive(Debug, Clone)]
+pub struct Chunk {
+    pub file_path: String,
+    pub chunk_size: u64,
+    pub offset: u64,
+    pub index: u8,
+    pub total_size: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct ScheduledChunk {
+    pub node: Node,
+    pub chunk: Chunk,
 }
