@@ -1,4 +1,4 @@
-use crate::consts::BUF_SIZE;
+use crate::consts::BUFF_SIZE;
 use crate::server::service::{handle_download_msg, handle_upload_msg};
 use crate::types::Protocol;
 
@@ -13,7 +13,7 @@ pub async fn handle_incoming_stream(
     tx: Sender<Vec<u8>>,
     storage_path: String,
 ) {
-    let mut buf = BytesMut::with_capacity(BUF_SIZE);
+    let mut buf = BytesMut::with_capacity(BUFF_SIZE);
 
     loop {
         tokio::select! {
@@ -24,11 +24,22 @@ pub async fn handle_incoming_stream(
                 } else if let Ok(msg) = serde_json::from_slice::<Protocol>(&buf) {
                     match msg {
                         Protocol::Upload(upload) => {
-                            drop(tokio::spawn(handle_upload_msg(upload, storage_path.clone())));
+                            let storage_path = storage_path.clone();
+                            drop(tokio::spawn(async move {
+                                if let Err(e) = handle_upload_msg(upload, storage_path).await {
+                                    println!("upload failed: {e}");
+                                }
+                            }));
                             buf.clear();
                         },
                         Protocol::Download(download) => {
-                            drop(tokio::spawn(handle_download_msg(download, storage_path.clone(), tx.clone())));
+                            let storage_path = storage_path.clone();
+                            let tx = tx.clone();
+                            drop(tokio::spawn(async move {
+                                if let Err(e) = handle_download_msg(download, storage_path, tx).await {
+                                    println!("server - download failed: {e}");
+                                }
+                            }));
                             buf.clear();
                         },
                         Protocol::Abort => {
