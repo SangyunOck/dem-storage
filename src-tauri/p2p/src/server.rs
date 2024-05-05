@@ -3,7 +3,7 @@ mod service;
 
 use async_channel::{unbounded, Receiver, Sender};
 use eyre::Result;
-use quinn::{Endpoint, RecvStream, SendStream, ServerConfig, VarInt};
+use quinn::{Connection, Endpoint, RecvStream, SendStream, ServerConfig, VarInt};
 use std::future::Future;
 use std::sync::Arc;
 use std::time::Duration;
@@ -38,8 +38,8 @@ pub async fn spin_up_server<TxF, RxF, TxFut, RxFut>(
     storage_path: String,
 ) -> Result<JoinHandle<()>>
 where
-    TxF: Fn(SendStream, Receiver<Vec<u8>>) -> TxFut + Send + Sync + 'static,
-    RxF: Fn(RecvStream, Sender<Vec<u8>>, String) -> RxFut + Send + Sync + 'static,
+    TxF: Fn(SendStream, Receiver<Vec<u8>>) -> TxFut + Send + Sync + Copy + 'static,
+    RxF: Fn(RecvStream, Sender<Vec<u8>>, String) -> RxFut + Send + Sync + Copy + 'static,
     TxFut: Future<Output = ()> + Send + Sync + 'static,
     RxFut: Future<Output = ()> + Send + Sync + 'static,
 {
@@ -51,18 +51,8 @@ where
             if let Some(connecting) = ep.accept().await {
                 match connecting.await {
                     Ok(connection) => {
-                        println!("accepted new client: {}", connection.remote_address());
-                        let stream = connection.accept_bi().await;
-                        match stream {
-                            Err(e) => println!("connection error: {e}"),
-                            Ok((tx_stream, rx_stream)) => {
-                                let (msg_tx, msg_rx) = unbounded();
-                                let tx_handle = tokio::spawn(tx_task(tx_stream, msg_rx));
-                                let rx_handle =
-                                    tokio::spawn(rx_task(rx_stream, msg_tx, storage_path.clone()));
-                                let _ = tokio::join!(tx_handle, rx_handle);
-                            }
-                        };
+                        let storage_path = storage_path.clone();
+                        handle_connection(connection, tx_task, rx_task, storage_path).await;
                     }
                     Err(e) => println!("connection error: {e}"),
                 }
@@ -71,4 +61,30 @@ where
     });
 
     Ok(handle)
+}
+
+async fn handle_connection<TxF, RxF, TxFut, RxFut>(
+    connection: Connection,
+    tx_task: TxF,
+    rx_task: RxF,
+    storage_path: String,
+) where
+    TxF: Fn(SendStream, Receiver<Vec<u8>>) -> TxFut + Send + Sync + Copy + 'static,
+    RxF: Fn(RecvStream, Sender<Vec<u8>>, String) -> RxFut + Send + Sync + Copy + 'static,
+    TxFut: Future<Output = ()> + Send + Sync + 'static,
+    RxFut: Future<Output = ()> + Send + Sync + 'static,
+{
+    drop(tokio::spawn(async move {
+        println!("accepted new client: {}", connection.remote_address());
+        let stream = connection.accept_bi().await;
+        match stream {
+            Err(e) => println!("connection error: {e}"),
+            Ok((tx_stream, rx_stream)) => {
+                let (msg_tx, msg_rx) = unbounded();
+                let tx_handle = tokio::spawn(tx_task(tx_stream, msg_rx));
+                let rx_handle = tokio::spawn(rx_task(rx_stream, msg_tx, storage_path));
+                let _ = tokio::join!(tx_handle, rx_handle);
+            }
+        };
+    }));
 }
