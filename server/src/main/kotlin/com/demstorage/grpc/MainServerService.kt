@@ -11,7 +11,7 @@ import io.grpc.stub.StreamObserver
 import net.devh.boot.grpc.server.service.GrpcService
 
 @GrpcService
-class GrpcNodeService(
+class MainServerService(
     private val nodeOperations: NodeOperations,
 ) : MainServerOperationsGrpc.MainServerOperationsImplBase() {
 
