@@ -26,6 +26,10 @@ pub async fn handle_incoming_stream(
                         Protocol::Upload(upload) => {
                             let storage_path = storage_path.clone();
                             drop(tokio::spawn(async move {
+                                println!(
+                                    "server - handling upload request: peer-id: {}, file_name: {}, index: {}",
+                                    upload.peer_id, upload.file_name, upload.index
+                                );
                                 if let Err(e) = handle_upload_msg(upload, storage_path).await {
                                     println!("upload failed: {e}");
                                 }
@@ -36,6 +40,10 @@ pub async fn handle_incoming_stream(
                             let storage_path = storage_path.clone();
                             let tx = tx.clone();
                             drop(tokio::spawn(async move {
+                                println!(
+                                    "server - handling download request: peer-id: {}, file_name: {}, index: {}",
+                                    download.peer_id, download.file_name, download.index
+                                );
                                 if let Err(e) = handle_download_msg(download, storage_path, tx).await {
                                     println!("server - download failed: {e}");
                                 }

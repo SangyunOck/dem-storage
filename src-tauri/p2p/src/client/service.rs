@@ -66,6 +66,7 @@ pub async fn handle_download_cmd(download_cmd: DownloadReq, tx: Sender<Vec<u8>>)
 
 pub async fn handle_download_resp(download_resp: DownloadResp, password: &str) -> eyre::Result<()> {
     let base_path = std::env::var("BASE_PATH").unwrap_or(".".to_string());
+    let _ = tokio::fs::create_dir_all(&base_path).await;
 
     let whole_file_path = format!(
         "{}/{}",

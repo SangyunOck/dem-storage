@@ -27,14 +27,26 @@ pub async fn handle_incoming_stream(
                     Command::Upload(upload) => {
                         let resp_tx = resp_tx.clone();
                         drop(tokio::spawn(async move {
+                            println!(
+                                "client - handling upload request: peer-id: {}, file_name: {}, index: {}",
+                                upload.peer_id, upload.file_path, upload.index
+                            );
                             if let Err(e) = handle_upload_cmd(upload, resp_tx).await {
                                 println!("failed to upload: {e}");
                             }
                         }));
                     },
                     Command::DownloadReq(download) => {
-                        handle_download_cmd(download.clone(), resp_tx.clone()).await;
-                        download_reqs.insert(format!("{}-{}", download.file_name, download.index), download).await;
+                        let resp_tx = resp_tx.clone();
+                        let download_reqs = download_reqs.clone();
+                        drop(tokio::spawn(async move {
+                            println!(
+                                "client - handling download request: peer-id: {}, file_name: {}, index: {}",
+                                download.peer_id, download.file_name, download.index
+                            );
+                            handle_download_cmd(download.clone(), resp_tx).await;
+                            download_reqs.insert(format!("{}-{}", download.file_name, download.index), download).await;
+                        }))
                     }
                 }
             },
