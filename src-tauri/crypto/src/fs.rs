@@ -1,10 +1,10 @@
-use std::cmp::Ordering;
 use async_channel::Sender;
+use std::cmp::Ordering;
 use std::io::SeekFrom;
 use tokio::fs::OpenOptions;
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
 
-const BUF_SIZE: usize = 8192;
+pub const BUFF_SIZE: u64 = 8192;
 
 pub async fn stream_cipher(
     key: [u8; 32],
@@ -14,7 +14,7 @@ pub async fn stream_cipher(
     limit: u64,
     cipher_tx: Sender<Vec<u8>>,
 ) -> eyre::Result<()> {
-    let mut buf = [0; BUF_SIZE];
+    let mut buf = [0; BUFF_SIZE as usize];
 
     let mut file = OpenOptions::new().read(true).open(file_path).await?;
     file.seek(SeekFrom::Start(offset)).await?;
@@ -24,6 +24,9 @@ pub async fn stream_cipher(
         tokio::select! {
             Ok(n) = file.read(&mut buf) => {
                 if n == 0 {
+                    break;
+                }
+                if read > limit {
                     break;
                 }
 
@@ -46,7 +49,6 @@ pub async fn stream_cipher(
                         break;
                     }
                 }
-
                 read += n as u64;
             },
             _ = tokio::task::yield_now() => {}

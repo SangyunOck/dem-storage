@@ -4,7 +4,7 @@ use aes_gcm::aead::{Aead, Nonce};
 use aes_gcm::{Aes256Gcm, Key, KeyInit};
 use eyre::eyre;
 
-pub const AES_GCM_TAG_SIZE: usize = 16;
+pub const AES_GCM_TAG_SIZE: u64 = 16;
 
 pub fn encrypt_aes256gcm(
     key: [u8; 32],

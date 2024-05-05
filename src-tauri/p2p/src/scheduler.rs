@@ -16,28 +16,41 @@ async fn get_file_offsets(file_path: &str, chunks: u64) -> Result<Vec<Chunk>> {
     let mut idx = 0;
     while size >= chunk_size {
         offsets.push(Chunk {
+            file_path: file_path.to_string(),
             chunk_size,
             index: idx,
-            offset: chunk_size * idx,
+            offset: chunk_size * idx as u64,
+            total_size,
         });
         size -= chunk_size;
         idx += 1;
     }
 
     offsets.push(Chunk {
+        file_path: file_path.to_string(),
         chunk_size: size,
         index: idx,
-        offset: chunk_size * idx,
+        offset: chunk_size * idx as u64,
+        total_size,
     });
 
     Ok(offsets)
 }
 
-pub async fn map_available_nodes(file_path: &str, nodes: Vec<Node>) -> Result<Vec<ScheduledChunk>> {
+pub async fn get_scheduled_chunks(
+    file_path: &str,
+    nodes: Vec<Node>,
+) -> Result<Vec<ScheduledChunk>> {
     let node_len = nodes.len();
-    let node_combinations = nodes.into_iter().combinations(2).collect_vec();
+    let node_combinations = nodes
+        .into_iter()
+        .combinations(2.min(node_len))
+        .collect_vec();
     let offsets = get_file_offsets(file_path, node_len as u64).await?;
-    let mut offset_combinations = offsets.into_iter().combinations(2).collect_vec();
+    let mut offset_combinations = offsets
+        .into_iter()
+        .combinations(2.min(node_len))
+        .collect_vec();
     offset_combinations.reverse();
 
     let mut scheduled_chunk = vec![];
