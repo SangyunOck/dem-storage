@@ -13,10 +13,14 @@ class NodeRestController(
 ) {
     private val logger = KotlinLogging.logger {}
 
+    companion object {
+        private const val DEFAULT_NODE_LIMIT = 3
+    }
+
     @GetMapping("/available-nodes")
     fun getAvailableNodes(): AvailableNodeResponse {
         logger.info { "get available nodes" }
-        val nodes = availableNodeLoader.load()
+        val nodes = availableNodeLoader.load(DEFAULT_NODE_LIMIT)
         return AvailableNodeResponse(
             nodes = nodes.map {
                 AvailableNode(
