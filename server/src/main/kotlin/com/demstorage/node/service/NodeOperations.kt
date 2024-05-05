@@ -12,6 +12,8 @@ interface NodeOperations {
         ipAddress: NodeIpAddress,
         peerId: NodePeerId,
     ): NodePeerId
+
+    fun findAll(): List<Node>
 }
 
 @Transactional
@@ -31,5 +33,9 @@ class StandardNodeOperations(
                 ipAddress = ipAddress,
             )
         ).peerId
+    }
+
+    override fun findAll(): List<Node> {
+        return nodeRepository.findAll()
     }
 }

@@ -12,6 +12,7 @@ import org.jetbrains.exposed.sql.upsert
 interface NodeRepository {
     fun save(node: Node): Node
     fun findByIpAddress(ipAddress: NodeIpAddress): Node?
+    fun findAll(): List<Node>
 }
 
 class ExposedNodeRepository : NodeRepository {
@@ -35,6 +36,14 @@ class ExposedNodeRepository : NodeRepository {
                 it[updatedAt] = node.updatedAt
             }
             node
+        }
+    }
+
+    override fun findAll(): List<Node> {
+        return transaction {
+            NodeEntity
+                .selectAll()
+                .map { NodeEntity.toNode(it) }
         }
     }
 }
