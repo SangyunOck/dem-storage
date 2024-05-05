@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Form, Link, redirect, useActionData } from "react-router-dom";
+import { Form, Link, useActionData, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import {
   Box,
   Button,
@@ -11,27 +12,42 @@ import {
 } from "@mui/material";
 
 import { serverFetcher } from "../fetchers.ts";
+import { login } from "../redux/slices/userSlice.ts";
 
-export const loginAction = async ({ request }: { request: Request }) => {
+type resType = {
+  id?: string;
+  ok: boolean;
+};
+
+export const loginAction = async ({
+  request,
+}: {
+  request: Request;
+}): Promise<resType> => {
   const data = await request.formData();
   return serverFetcher
     .post("/member/login", data)
-    .then((res) => {
-      console.log(res);
-      return redirect("/");
+    .then((res): resType => {
+      return { id: res.data.id, ok: true };
     })
-    .catch((err) => {
-      console.error(err);
-      return err;
+    .catch((): resType => {
+      return { ok: false };
     });
 };
 
 function Login() {
-  const actionData = useActionData();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const actionData = useActionData() as resType;
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    if (actionData) setIsError(true);
+    if (!!actionData) {
+      if (actionData.ok && actionData.id) {
+        dispatch(login(actionData.id));
+        navigate("/");
+      } else setIsError(true);
+    }
     return () => {};
   }, [actionData]);
 

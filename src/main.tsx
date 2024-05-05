@@ -6,11 +6,13 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 
 import { mui_theme } from "./mui_theme.ts";
 import { store } from "./redux/store.ts";
-import App from "./App";
 import Login, { loginAction } from "./routes/Login.tsx";
 import Signup, { signupAction } from "./routes/Signup.tsx";
 import MemberLayout from "./layouts/MemberLayout.tsx";
 import NewMember from "./routes/NewMember.tsx";
+import MainLayout from "./layouts/MainLayout.tsx";
+import MyFiles from "./routes/MyFiles.tsx";
+import Settings from "./routes/Settings.tsx";
 
 const router = createBrowserRouter([
   {
@@ -35,7 +37,17 @@ const router = createBrowserRouter([
   },
   {
     path: "/",
-    element: <App />,
+    element: <MainLayout />,
+    children: [
+      {
+        path: "",
+        element: <MyFiles />,
+      },
+      {
+        path: "settings",
+        element: <Settings />,
+      },
+    ],
   },
 ]);
 

@@ -1,7 +1,9 @@
 import { useMemo } from "react";
 import { Box, Grid, LinearProgress, Typography } from "@mui/material";
+import { useAppSelector } from "../redux/store.ts";
 
 function UserInfoBox() {
+  const id = useAppSelector((state) => state.user.value.id);
   const maxValue: number = 50;
   const currentValue: number = 0.5;
 
@@ -13,7 +15,7 @@ function UserInfoBox() {
     <Box>
       <Grid container py={1} spacing={2}>
         <Grid item xs={12}>
-          <Typography>user123</Typography>
+          <Typography>{id}</Typography>
         </Grid>
         <Grid item xs={12}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>

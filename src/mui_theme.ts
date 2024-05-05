@@ -4,7 +4,7 @@ export const mui_theme = createTheme({
   components: {
     MuiButton: {
       defaultProps: {
-        variant: "outlined",
+        variant: "contained",
       },
     },
     MuiCard: {

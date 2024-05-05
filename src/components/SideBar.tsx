@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   ButtonBase,
@@ -13,6 +14,7 @@ import {
   Folder,
   KeyboardDoubleArrowLeft,
   KeyboardDoubleArrowRight,
+  Settings,
 } from "@mui/icons-material";
 
 import UserInfoBox from "./UserInfoBox.tsx";
@@ -24,6 +26,7 @@ const CustomButtonBase = styled(ButtonBase)(({ theme }) => ({
 }));
 
 function SideBar() {
+  const navigate = useNavigate();
   const theme = useTheme();
   const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
   const [isCompact, setIsCompact] = useState<boolean>(isSmall);
@@ -57,7 +60,7 @@ function SideBar() {
       </Box>
       {!isCompact && <UserInfoBox />}
       <Divider />
-      <CustomButtonBase>
+      <CustomButtonBase onClick={() => navigate("/")}>
         <div
           style={{
             width: "100%",
@@ -67,6 +70,18 @@ function SideBar() {
         >
           <Folder />
           {!isCompact && <Typography>내 파일</Typography>}
+        </div>
+      </CustomButtonBase>
+      <CustomButtonBase onClick={() => navigate("/settings")}>
+        <div
+          style={{
+            width: "100%",
+            display: "grid",
+            gridTemplateColumns: "24px 1fr",
+          }}
+        >
+          <Settings />
+          {!isCompact && <Typography>설정</Typography>}
         </div>
       </CustomButtonBase>
     </Stack>
