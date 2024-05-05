@@ -14,6 +14,7 @@ pub struct UploadReq {
     pub password: String,
     pub file_path: String,
     pub offset: u64,
+    pub limit: u64,
     pub index: u8,
 }
 

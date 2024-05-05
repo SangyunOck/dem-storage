@@ -52,6 +52,7 @@ async fn main() -> eyre::Result<()> {
             file_path: "/Users/sangyun/Documents/workspace/dem-storage/src-tauri/src/main.rs"
                 .to_string(),
             offset: 0,
+            limit: 10000,
             index: 0,
         }))
         .await;

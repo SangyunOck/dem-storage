@@ -37,6 +37,7 @@ async fn handle_init_secret(
         nonce,
         init_secret.file_path,
         init_secret.offset,
+        init_secret.limit,
         cipher_tx.clone(),
     ));
     (handle, cipher_rx)

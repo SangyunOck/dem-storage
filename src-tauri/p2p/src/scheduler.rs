@@ -1,16 +1,13 @@
 use crate::types::{Chunk, Node, ScheduledChunk};
 
-use std::io::SeekFrom;
-use tokio::fs::OpenOptions;
 use eyre::Result;
 use itertools::Itertools;
+use std::io::SeekFrom;
+use tokio::fs::OpenOptions;
 use tokio::io::AsyncSeekExt;
 
 async fn get_file_offsets(file_path: &str, chunks: u64) -> Result<Vec<Chunk>> {
-    let mut file = OpenOptions::new()
-        .read(true)
-        .open(file_path)
-        .await?;
+    let mut file = OpenOptions::new().read(true).open(file_path).await?;
 
     let mut offsets = vec![];
     let total_size = file.seek(SeekFrom::End(0)).await?;
@@ -21,16 +18,16 @@ async fn get_file_offsets(file_path: &str, chunks: u64) -> Result<Vec<Chunk>> {
         offsets.push(Chunk {
             chunk_size,
             index: idx,
-            offset: chunk_size * idx
+            offset: chunk_size * idx,
         });
         size -= chunk_size;
         idx += 1;
-    };
+    }
 
     offsets.push(Chunk {
         chunk_size: size,
         index: idx,
-        offset: chunk_size * idx
+        offset: chunk_size * idx,
     });
 
     Ok(offsets)
@@ -46,12 +43,9 @@ pub async fn map_available_nodes(file_path: &str, nodes: Vec<Node>) -> Result<Ve
     let mut scheduled_chunk = vec![];
     for (nodes, chunks) in node_combinations.into_iter().zip(offset_combinations) {
         for (node, chunk) in nodes.into_iter().zip(chunks) {
-            scheduled_chunk.push(ScheduledChunk {
-                node,
-                chunk,
-            })
+            scheduled_chunk.push(ScheduledChunk { node, chunk })
         }
     }
-    
+
     Ok(scheduled_chunk)
 }
