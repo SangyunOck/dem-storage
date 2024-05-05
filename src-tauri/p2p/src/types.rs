@@ -52,3 +52,21 @@ pub enum Command {
     Upload(UploadReq),
     DownloadReq(DownloadReq),
 }
+
+#[derive(Debug, Clone)]
+pub struct Node {
+    pub endpoint: String,
+    pub peer_id: String,
+}
+#[derive(Debug, Clone)]
+pub struct Chunk {
+    pub chunk_size: u64,
+    pub offset: u64,
+    pub index: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct ScheduledChunk {
+    pub node: Node,
+    pub chunk: Chunk,
+}
