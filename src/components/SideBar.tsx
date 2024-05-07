@@ -2,10 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
-  ButtonBase,
   Divider,
   Stack,
-  styled,
   Typography,
   useMediaQuery,
   useTheme,
@@ -18,12 +16,7 @@ import {
 } from "@mui/icons-material";
 
 import UserInfoBox from "./UserInfoBox.tsx";
-
-const CustomButtonBase = styled(ButtonBase)(({ theme }) => ({
-  borderRadius: theme.spacing(1),
-  padding: theme.spacing(1),
-  ":hover": { backgroundColor: theme.palette.divider },
-}));
+import { CustomButtonBase } from "./styles.tsx";
 
 function SideBar() {
   const navigate = useNavigate();

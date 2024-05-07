@@ -1,19 +1,18 @@
 import { memo, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { IconButton, ListItem, ListItemText } from "@mui/material";
-import { Delete, Upload } from "@mui/icons-material";
+import { Delete, Download } from "@mui/icons-material";
 
-import { deleteFile } from "../redux/slices/uploadSlice.ts";
+import { deleteFile, uploadFileType } from "../redux/slices/uploadSlice.ts";
 
 interface Props {
-  idx: number;
-  file: File;
+  myFile: uploadFileType;
 }
 
-function FileListItem({ idx, file }: Props) {
+function FileListItem({ myFile }: Props) {
   const dispatch = useDispatch();
 
-  const upload = useCallback(() => {
+  const download = useCallback(() => {
     //TODO: 파일 업로드 호출
   }, []);
 
@@ -21,16 +20,16 @@ function FileListItem({ idx, file }: Props) {
     <ListItem
       secondaryAction={
         <>
-          <IconButton onClick={upload}>
-            <Upload />
+          <IconButton onClick={download}>
+            <Download />
           </IconButton>
-          <IconButton onClick={() => dispatch(deleteFile(idx))}>
+          <IconButton onClick={() => dispatch(deleteFile(myFile.id))}>
             <Delete />
           </IconButton>
         </>
       }
     >
-      <ListItemText primary={file.name} />
+      <ListItemText primary={myFile.file.name} />
     </ListItem>
   );
 }

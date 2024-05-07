@@ -3,6 +3,11 @@ import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { CssBaseline, ThemeProvider } from "@mui/material";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
+import "dayjs/locale/ko";
+dayjs.locale("ko");
 
 import { mui_theme } from "./mui_theme.ts";
 import { store } from "./redux/store.ts";
