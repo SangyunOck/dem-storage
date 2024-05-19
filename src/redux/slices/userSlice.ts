@@ -1,16 +1,14 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-type userType = {
-  id: string | null;
-  isAuthenticated: boolean;
-};
+import { userSliceType, userType } from "../types.ts";
 
 type defaultType = {
-  value: userType;
+  value: userSliceType;
 };
 const initState: defaultType = {
   value: {
-    id: null,
+    id: "user1",
+    password: "password",
     isAuthenticated: false,
   },
 };
@@ -19,12 +17,14 @@ const userSlice = createSlice({
   name: "user-info",
   initialState: initState,
   reducers: {
-    login: (state, action: PayloadAction<string>) => {
-      state.value.id = action.payload;
+    login: (state, action: PayloadAction<userType>) => {
+      state.value.id = action.payload.id;
+      state.value.password = action.payload.password;
       state.value.isAuthenticated = true;
     },
     logout: (state) => {
       state.value.id = null;
+      state.value.password = null;
       state.value.isAuthenticated = false;
     },
   },

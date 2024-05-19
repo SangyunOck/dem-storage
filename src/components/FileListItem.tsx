@@ -3,10 +3,11 @@ import { useDispatch } from "react-redux";
 import { IconButton, ListItem, ListItemText } from "@mui/material";
 import { Delete, Download } from "@mui/icons-material";
 
-import { deleteFile, uploadFileType } from "../redux/slices/uploadSlice.ts";
+import { deleteFile } from "../redux/slices/uploadSlice.ts";
+import { uploadFileSliceType } from "../redux/types.ts";
 
 interface Props {
-  myFile: uploadFileType;
+  myFile: uploadFileSliceType;
 }
 
 function FileListItem({ myFile }: Props) {
@@ -29,7 +30,7 @@ function FileListItem({ myFile }: Props) {
         </>
       }
     >
-      <ListItemText primary={myFile.file.name} />
+      <ListItemText primary={myFile.name} />
     </ListItem>
   );
 }

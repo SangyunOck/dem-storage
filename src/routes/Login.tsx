@@ -13,9 +13,11 @@ import {
 
 import { serverFetcher } from "../fetchers.ts";
 import { login } from "../redux/slices/userSlice.ts";
+import AddFileBtn from "../components/AddFileBtn.tsx";
 
 type resType = {
   id?: string;
+  password?: string;
   ok: boolean;
 };
 
@@ -25,10 +27,12 @@ export const loginAction = async ({
   request: Request;
 }): Promise<resType> => {
   const data = await request.formData();
+  // @ts-ignore
+  const pw = data?.get("password") ? data.get("password").toString() : "";
   return serverFetcher
     .post("/member/login", data)
     .then((res): resType => {
-      return { id: res.data.id, ok: true };
+      return { id: res.data.id, password: pw, ok: true };
     })
     .catch((): resType => {
       return { ok: false };
@@ -43,8 +47,8 @@ function Login() {
 
   useEffect(() => {
     if (!!actionData) {
-      if (actionData.ok && actionData.id) {
-        dispatch(login(actionData.id));
+      if (actionData.ok && actionData.id && actionData.password) {
+        dispatch(login({ id: actionData.id, password: actionData.password }));
         navigate("/");
       } else setIsError(true);
     }
@@ -73,6 +77,7 @@ function Login() {
           {isError && "아이디나 비밀번호를 확인해주세요."}
         </FormHelperText>
         <Button type={"submit"}>로그인</Button>
+        <AddFileBtn />
         <Box>
           <MLink component={Link} to={"/member/signup"}>
             <Typography variant={"caption"}>회원가입 하러가기</Typography>

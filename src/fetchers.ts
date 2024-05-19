@@ -5,4 +5,5 @@ export const serverFetcher = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  timeout: 1500,
 });

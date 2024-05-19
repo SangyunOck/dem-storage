@@ -1,40 +1,104 @@
-import { ChangeEvent, useCallback, useEffect, useRef } from "react";
+import { MouseEvent, SyntheticEvent, useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
-import { Button } from "@mui/material";
+import { Alert, Button, Snackbar } from "@mui/material";
+import { CloudUpload } from "@mui/icons-material";
+import { invoke } from "@tauri-apps/api/tauri";
+import { open } from "@tauri-apps/api/dialog";
+import _ from "underscore";
 
 import { addFile } from "../redux/slices/uploadSlice.ts";
-import { CloudUpload } from "@mui/icons-material";
-import UploadTest from "../test/UploadTest.tsx";
+import { serverFetcher } from "../fetchers.ts";
+import { useAppSelector } from "../redux/store.ts";
+import { uploadFileType } from "../redux/types.ts";
+
+interface NodeType {
+  peer_id: string;
+  endpoint: string;
+}
 
 function AddFileBtn() {
   const dispatch = useDispatch();
-  const currentID = useRef<number>(-1);
-  const [startInterval, killInterval, killAllIntervals] = UploadTest();
+  const pw = useAppSelector((state) => state.user.value.password);
+  const [openAlarm, setOpenAlarm] = useState(false);
 
-  const onChangeFile = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      e.preventDefault();
+  const onClickBtn = useCallback(
+    async (e: MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
-      if (e.target.files && e.target.files[0]) {
-        dispatch(addFile(e.target.files[0]));
-        currentID.current += 1;
-        startInterval(currentID.current, 10, 1000);
+
+      const nodes = await serverFetcher
+        .get("/node/available-nodes")
+        .then((res) => {
+          return _.map(
+            res.data.nodes,
+            (v): NodeType => ({ peer_id: v.peerId, endpoint: v.ipAddress }),
+          );
+        })
+        .catch((err) => {
+          console.error(err);
+          return null;
+        });
+
+      if (!nodes) {
+        setOpenAlarm(true);
+        return;
       }
+
+      const selected = await open({
+        directory: false,
+        title: "업로드 파일 선택",
+      });
+
+      const re = new RegExp(/([\\/])/, "g");
+      let uploadFile: uploadFileType | null = null;
+      if (selected) {
+        if (typeof selected == "string") {
+          const dirs = selected.split(re);
+          const fileName = dirs[dirs.length - 1];
+          uploadFile = { name: fileName, path: selected };
+        } else {
+          const dirs = selected[0].split(re);
+          const fileName = dirs[dirs.length - 1];
+          uploadFile = { name: fileName, path: selected[0] };
+        }
+      }
+
+      if (!uploadFile) return;
+
+      dispatch(addFile(uploadFile));
+      invoke("upload", {
+        nodes: nodes,
+        path: uploadFile.path,
+        userPassword: pw,
+      })
+        .then((res) => console.log(res))
+        .catch((err) => console.error(err));
     },
-    [currentID.current],
+    [pw],
   );
 
-  useEffect(() => {
-    return () => {
-      killAllIntervals();
-    };
-  }, []);
+  const handleClose = (_?: SyntheticEvent | Event, reason?: string) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setOpenAlarm(false);
+  };
 
   return (
-    <Button component={"label"} role={undefined} startIcon={<CloudUpload />}>
-      파일 업로드
-      <input type={"file"} hidden onChange={onChangeFile} />
-    </Button>
+    <>
+      <Button onClick={onClickBtn} startIcon={<CloudUpload />}>
+        파일 업로드
+      </Button>
+      <Snackbar open={openAlarm} autoHideDuration={3000} onClose={handleClose}>
+        <Alert
+          onClose={handleClose}
+          severity={"error"}
+          variant={"filled"}
+          sx={{ width: "100%" }}
+        >
+          서버에 연결할 수 없습니다.
+        </Alert>
+      </Snackbar>
+    </>
   );
 }
 

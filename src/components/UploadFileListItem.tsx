@@ -10,16 +10,16 @@ import {
 import { CheckCircle } from "@mui/icons-material";
 import dayjs from "dayjs";
 
-import { uploadFileType } from "../redux/slices/uploadSlice.ts";
+import { uploadFileSliceType } from "../redux/types.ts";
 
 interface Props {
-  uploadFile: uploadFileType;
+  uploadFile: uploadFileSliceType;
 }
 
 const setTimeStamp = (dateTime: Date) => dayjs(dateTime).locale("ko").fromNow();
 
 function UploadFileListItem(props: Props) {
-  const { id, file, startAt, progress, isCompleted } = props.uploadFile;
+  const { name, startAt, progress, isCompleted } = props.uploadFile;
   const timeStamp = useRef(setTimeStamp(startAt));
 
   useEffect(() => {
@@ -34,7 +34,7 @@ function UploadFileListItem(props: Props) {
           <Grid item container xs>
             <Grid item xs={12}>
               <div style={{ width: `270px`, position: "relative" }}>
-                <Typography noWrap>{file.name}</Typography>
+                <Typography noWrap>{name}</Typography>
                 {isCompleted && (
                   <div style={{ position: "absolute", top: 0, right: -5 }}>
                     <CheckCircle fontSize={"small"} color={"success"} />

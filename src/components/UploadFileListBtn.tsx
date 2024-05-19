@@ -8,6 +8,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { Upload } from "@mui/icons-material";
+import _ from "underscore";
 
 import { useAppSelector } from "../redux/store.ts";
 import { CustomButtonBase, ScrollBox } from "./styles.tsx";
@@ -84,7 +85,7 @@ function UploadFileListBtn() {
             ) : (
               <List disablePadding>
                 {files.map((f) => (
-                  <UploadFileListItem uploadFile={f} />
+                  <UploadFileListItem key={_.uniqueId(f.name)} uploadFile={f} />
                 ))}
               </List>
             )}
