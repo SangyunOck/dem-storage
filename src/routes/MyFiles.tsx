@@ -10,11 +10,9 @@ function MyFiles() {
   return (
     <ScrollBox>
       <List sx={{ width: "100%" }}>
-        {fileList
-          .filter((f) => f.isCompleted)
-          .map((item, idx) => (
-            <FileListItem key={idx} myFile={item} />
-          ))}
+        {fileList.map((item, idx) => (
+          <FileListItem key={idx} myFile={item} />
+        ))}
       </List>
     </ScrollBox>
   );

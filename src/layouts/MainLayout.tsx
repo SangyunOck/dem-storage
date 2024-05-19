@@ -12,9 +12,9 @@ function MainLayout() {
   const userData = useAppSelector((state) => state.user.value);
 
   useEffect(() => {
-    if (!userData.isAuthenticated || !userData.id) {
-      navigate("/member/login");
-    }
+    // if (!userData.isAuthenticated || !userData.id) {
+    //   navigate("/member/login");
+    // }
     return () => {};
   }, [userData]);
 
