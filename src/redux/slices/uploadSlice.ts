@@ -1,20 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-export type setFileProgress = {
-  id: number;
-  progress: number;
-};
-
-export type uploadFileType = {
-  file: File;
-  id: number;
-  startAt: Date;
-  isCompleted: boolean;
-  progress: number;
-};
+import {
+  setFileProgress,
+  uploadFileSliceType,
+  uploadFileType,
+} from "../types.ts";
 
 type defaultType = {
-  value: uploadFileType[];
+  value: uploadFileSliceType[];
 };
 const initState: defaultType = {
   value: [],
@@ -24,10 +17,11 @@ const uploadSlice = createSlice({
   name: "uploadFiles",
   initialState: initState,
   reducers: {
-    addFile: (state, action: PayloadAction<File>) => {
+    addFile: (state, action: PayloadAction<uploadFileType>) => {
       state.value.push({
         id: state.value.length,
-        file: action.payload,
+        name: action.payload.name,
+        path: action.payload.path,
         startAt: new Date(),
         isCompleted: false,
         progress: 0,
