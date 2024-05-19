@@ -21,7 +21,7 @@ async fn upload(
     nodes: Vec<Node>,
     path: &str,
     user_password: &str
-) -> eyre::Result<()> {
+) -> eyre::Result<Vec<ScheduledChunk>> {
     // 프론트: 파일이 어떤 Vec<ScheduledChunk> 를 썼는지 기억해야한다.
     // TODO 파일별 청크 저장위해 리턴값 바꿔야함. 바꿀 때 상윤이랑 다시 이야기하기. eyre::Result<Vec<ScheduledChunk>>
 
@@ -31,12 +31,13 @@ async fn upload(
     for node in &nodes {
         println!("node: {:?}", node);
     }
-    Ok(())
 
-    // let scheduled_chunks = get_scheduled_chunks(
-    //     path,
-    //     nodes,
-    // ).await?;
+    let scheduled_chunks = get_scheduled_chunks(
+        path,
+        nodes,
+    ).await?;
+
+    Ok(scheduled_chunks)
     //
     // for scheduled_chunk in &scheduled_chunks {
     //     let (cmd_tx, cmd_rx) = unbounded();

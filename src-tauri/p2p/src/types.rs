@@ -59,12 +59,12 @@ pub enum Command {
     DownloadReq(DownloadReq),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Node {
     pub endpoint: String,
     pub peer_id: String,
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Chunk {
     pub file_path: String,
     pub chunk_size: u64,
@@ -73,7 +73,7 @@ pub struct Chunk {
     pub total_size: u64,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScheduledChunk {
     pub node: Node,
     pub chunk: Chunk,
