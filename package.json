@@ -27,6 +27,7 @@
     "react-router": "^6.23.0",
     "react-router-dom": "^6.23.0",
     "redux": "^5.0.1",
+    "tauri-plugin-store-api": "github:tauri-apps/tauri-plugin-store#v1",
     "underscore": "^1.13.6",
     "yarn": "^1.22.22"
   },

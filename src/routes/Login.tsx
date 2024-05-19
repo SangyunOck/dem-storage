@@ -13,7 +13,6 @@ import {
 
 import { serverFetcher } from "../fetchers.ts";
 import { login } from "../redux/slices/userSlice.ts";
-import AddFileBtn from "../components/AddFileBtn.tsx";
 
 type resType = {
   id?: string;
@@ -77,7 +76,6 @@ function Login() {
           {isError && "아이디나 비밀번호를 확인해주세요."}
         </FormHelperText>
         <Button type={"submit"}>로그인</Button>
-        <AddFileBtn />
         <Box>
           <MLink component={Link} to={"/member/signup"}>
             <Typography variant={"caption"}>회원가입 하러가기</Typography>

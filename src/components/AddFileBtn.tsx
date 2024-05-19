@@ -4,6 +4,7 @@ import { Alert, Button, Snackbar } from "@mui/material";
 import { CloudUpload } from "@mui/icons-material";
 import { invoke } from "@tauri-apps/api/tauri";
 import { open } from "@tauri-apps/api/dialog";
+import { Store } from "tauri-plugin-store-api";
 import _ from "underscore";
 
 import { addFile } from "../redux/slices/uploadSlice.ts";
@@ -11,10 +12,12 @@ import { serverFetcher } from "../fetchers.ts";
 import { useAppSelector } from "../redux/store.ts";
 import { uploadFileType } from "../redux/types.ts";
 
-interface NodeType {
+export type NodeType = {
   peer_id: string;
   endpoint: string;
-}
+};
+
+const store = new Store(".scheduled_nodes.dat");
 
 function AddFileBtn() {
   const dispatch = useDispatch();
@@ -70,7 +73,10 @@ function AddFileBtn() {
         path: uploadFile.path,
         userPassword: pw,
       })
-        .then((res) => console.log(res))
+        .then(async (res) => {
+          await store.set(uploadFile?.path, { results: res });
+          await store.save();
+        })
         .catch((err) => console.error(err));
     },
     [pw],
