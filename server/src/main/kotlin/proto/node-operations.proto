@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option java_package = "com.demstorage.stubs";
+option java_multiple_files = true; // 각각의 메시지 타입과 서비스 타입에 대해 별도의 Java 파일이 생성됨. (서비스, 메시지 각각)
+
+service NodeOperations {
+  rpc CheckNode(CheckNodeRequest) returns (CheckNodeResponse);
+}
+
+message CheckNodeRequest {
+}
+
+message CheckNodeResponse {
+  bool is_available = 1;
+}

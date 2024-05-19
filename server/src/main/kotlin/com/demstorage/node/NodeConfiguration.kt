@@ -2,6 +2,8 @@ package com.demstorage.node
 
 import com.demstorage.node.repository.ExposedNodeRepository
 import com.demstorage.node.repository.NodeRepository
+import com.demstorage.node.service.NodeOperations
+import com.demstorage.node.service.StandardAvailableNodeLoader
 import com.demstorage.node.service.StandardNodeOperations
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -16,4 +18,9 @@ class NodeConfiguration {
     fun nodeOperations(
         nodeRepository: NodeRepository,
     ) = StandardNodeOperations(nodeRepository)
+
+    @Bean
+    fun availableNodeLoader(
+        nodeOperations: NodeOperations
+    ) = StandardAvailableNodeLoader(nodeOperations)
 }
