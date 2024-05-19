@@ -20,7 +20,7 @@ fn greet(name: &str) -> String {
 async fn upload(
     nodes: Vec<Node>,
     path: &str,
-    user_password: &str
+    user_password: &str,
 ) -> Result<Vec<ScheduledChunk>, ()> {
     // 프론트: 파일이 어떤 Vec<ScheduledChunk> 를 썼는지 기억해야한다.
     // TODO 파일별 청크 저장위해 리턴값 바꿔야함. 바꿀 때 상윤이랑 다시 이야기하기. eyre::Result<Vec<ScheduledChunk>>
@@ -68,7 +68,6 @@ async fn upload(
 async fn download(
     scheduled_chunks: Vec<ScheduledChunk>
 ) -> Result<(), ()> {
-
     for scheduled_chunk in &scheduled_chunks {
         println!("scheduled_chunk: {:?}", scheduled_chunk);
     }
@@ -104,6 +103,7 @@ async fn download(
     //
     // Ok(())
 }
+
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
 //     let port = std::env::var("PORT")
@@ -186,8 +186,7 @@ async fn main() -> eyre::Result<()> {
 
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![greet])
-        .invoke_handler(tauri::generate_handler![upload])
-        .invoke_handler(tauri::generate_handler![download])
+        .invoke_handler(tauri::generate_handler![upload, download])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 
