@@ -1,0 +1,2 @@
+### 사용 가능 노드 목록 조회하기
+GET localhost:8080/api/node/available-nodes
