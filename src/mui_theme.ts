@@ -1,4 +1,22 @@
+import { CSSProperties } from "react";
 import { createTheme } from "@mui/material";
+
+declare module "@mui/material/styles" {
+  interface TypographyVariants {
+    fileTitle: CSSProperties;
+  }
+
+  // allow configuration using `createTheme`
+  interface TypographyVariantsOptions {
+    fileTitle?: CSSProperties;
+  }
+}
+
+declare module "@mui/material/Typography" {
+  interface TypographyPropsVariantOverrides {
+    fileTitle: true;
+  }
+}
 
 export const mui_theme = createTheme({
   components: {
@@ -20,8 +38,21 @@ export const mui_theme = createTheme({
         },
       },
     },
+    MuiTypography: {
+      defaultProps: {
+        noWrap: true,
+        variantMapping: {
+          fileTitle: "h4",
+        },
+      },
+    },
   },
   palette: {
     mode: "dark",
+  },
+  typography: {
+    fileTitle: {
+      fontWeight: 600,
+    },
   },
 });

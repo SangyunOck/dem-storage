@@ -8,8 +8,8 @@ function MyFiles() {
   const fileList = useAppSelector((state) => state.upload.value);
 
   return (
-    <ScrollBox>
-      <List sx={{ width: "100%" }}>
+    <ScrollBox sx={{ height: "100%" }}>
+      <List sx={{ height: "inherit", width: "100%" }}>
         {fileList.map((item, idx) => (
           <FileListItem key={idx} myFile={item} />
         ))}

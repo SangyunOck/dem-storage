@@ -7,8 +7,8 @@ type defaultType = {
 };
 const initState: defaultType = {
   value: {
-    id: "user1",
-    password: "password",
+    id: null,
+    password: null,
     isAuthenticated: false,
   },
 };

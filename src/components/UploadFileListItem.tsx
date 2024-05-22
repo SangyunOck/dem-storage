@@ -34,7 +34,7 @@ function UploadFileListItem(props: Props) {
           <Grid item container xs>
             <Grid item xs={12}>
               <div style={{ width: `270px`, position: "relative" }}>
-                <Typography noWrap>{name}</Typography>
+                <Typography variant={"fileTitle"}>{name}</Typography>
                 {isCompleted && (
                   <div style={{ position: "absolute", top: 0, right: -5 }}>
                     <CheckCircle fontSize={"small"} color={"success"} />

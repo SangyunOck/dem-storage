@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Box, Grid, LinearProgress, Typography } from "@mui/material";
+
 import { useAppSelector } from "../redux/store.ts";
 
 function UserInfoBox() {
