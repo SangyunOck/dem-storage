@@ -11,7 +11,7 @@ dayjs.locale("ko");
 
 import { mui_theme } from "./mui_theme.ts";
 import { store } from "./redux/store.ts";
-import Login, { loginAction } from "./routes/Login.tsx";
+import Login from "./routes/Login.tsx";
 import Signup, { signupAction } from "./routes/Signup.tsx";
 import MemberLayout from "./layouts/MemberLayout.tsx";
 import NewMember from "./routes/NewMember.tsx";
@@ -27,7 +27,6 @@ const router = createBrowserRouter([
       {
         path: "login",
         element: <Login />,
-        action: loginAction,
       },
       {
         path: "signup",

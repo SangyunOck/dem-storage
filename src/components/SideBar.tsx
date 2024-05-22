@@ -1,13 +1,5 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Divider,
-  Stack,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import { Box, Divider, Stack, Typography } from "@mui/material";
 import {
   Folder,
   KeyboardDoubleArrowLeft,
@@ -18,20 +10,17 @@ import {
 import UserInfoBox from "./UserInfoBox.tsx";
 import { CustomButtonBase } from "./styles.tsx";
 
-function SideBar() {
-  const navigate = useNavigate();
-  const theme = useTheme();
-  const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
-  const [isCompact, setIsCompact] = useState<boolean>(isSmall);
+interface Props {
+  isCompact: boolean;
+  toggleIsCompact: () => void;
+}
 
-  useEffect(() => {
-    if (isSmall) setIsCompact(true);
-    else setIsCompact(false);
-    return () => {};
-  }, [isSmall]);
+function SideBar(props: Props) {
+  const { isCompact, toggleIsCompact } = props;
+  const navigate = useNavigate();
 
   return (
-    <Stack spacing={1}>
+    <Stack spacing={1} sx={{ width: "100%" }}>
       <Box
         sx={{
           flexGrow: 1,
@@ -40,9 +29,7 @@ function SideBar() {
         }}
       >
         <div>
-          <CustomButtonBase
-            onClick={() => setIsCompact((prevState) => !prevState)}
-          >
+          <CustomButtonBase onClick={toggleIsCompact}>
             {isCompact ? (
               <KeyboardDoubleArrowRight />
             ) : (

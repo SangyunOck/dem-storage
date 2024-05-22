@@ -58,7 +58,10 @@ function FileListItem({ myFile }: Props) {
         </>
       }
     >
-      <ListItemText primary={myFile.name} />
+      <ListItemText
+        primary={myFile.name}
+        primaryTypographyProps={{ variant: "fileTitle" }}
+      />
     </ListItem>
   );
 }
