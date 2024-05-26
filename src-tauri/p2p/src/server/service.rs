@@ -1,64 +1,123 @@
-use crate::types::{Download, DownloadResp, Protocol, Upload};
+use crate::consts::{DEFAULT_FILE_READ_SIZE, DEFAULT_STREAM_READ_BUF_SIZE};
+use crate::error::Error;
+use crate::types::{Header, ProtocolDownloadMetadata, ProtocolUploadHeader, ProtocolUploadReady};
 
-use async_channel::Sender;
-use bytes::BytesMut;
-use crypto::fs::BUFF_SIZE as CRYPTO_BUFF_SIZE;
-use crypto::AES_GCM_TAG_SIZE;
-use std::io::SeekFrom;
-use tokio::fs::OpenOptions;
-use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt};
+use quinn::{RecvStream, SendStream};
+use std::path::Path;
+use tokio::fs::{File, OpenOptions};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-pub async fn handle_upload_msg(upload: Upload, storage_path: String) -> eyre::Result<()> {
-    let file_path = format!(
-        "{}/{}-{}-{}",
-        storage_path, upload.peer_id, upload.file_name, upload.index
-    );
+pub async fn handshake(
+    tx: &mut SendStream,
+    header: &Header,
+    file: &mut Option<File>,
+) -> Result<(), Error> {
+    match header {
+        Header::UploadRequestHeader(..) => {
+            let upload_ready_ser =
+                bincode::serialize(&Header::UploadReady(ProtocolUploadReady)).unwrap();
+            tx.write(&upload_ready_ser).await?;
+        }
+        Header::DownloadRequestHeader(download_request_header) => {
+            let len = match file {
+                Some(f) => f.metadata().await?.len(),
+                None => 0,
+            };
 
-    let mut file = if std::path::Path::new(&file_path).is_file() {
-        OpenOptions::new().write(true).open(&file_path).await?
-    } else {
-        let _ = std::fs::create_dir_all(&storage_path);
-        OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&file_path)
-            .await?
-    };
-
-    file.seek(SeekFrom::Start(upload.offset)).await?;
-    file.write_buf(&mut upload.data.as_slice()).await?;
+            let metadata = Header::DownloadMetadata(ProtocolDownloadMetadata {
+                valid: file.is_some(),
+                file_name: download_request_header.file_name.to_string(),
+                index: download_request_header.index,
+                len,
+                offset: download_request_header.offset,
+            });
+            let metadata_ser = bincode::serialize(&metadata).unwrap();
+            tx.write(&metadata_ser).await?;
+        }
+        _ => (),
+    }
 
     Ok(())
 }
 
-pub async fn handle_download_msg(
-    download: Download,
-    storage_path: String,
-    tx: Sender<Vec<u8>>,
-) -> eyre::Result<()> {
-    let file_path = format!(
-        "{}/{}-{}-{}",
-        storage_path, download.peer_id, download.file_name, download.index
-    );
-    let mut file = OpenOptions::new().read(true).open(&file_path).await?;
-    let mut buf = BytesMut::with_capacity((CRYPTO_BUFF_SIZE + AES_GCM_TAG_SIZE) as usize);
+pub async fn handle_upload_file(
+    mut rx: RecvStream,
+    file: Option<File>,
+    _protocol_upload_header: ProtocolUploadHeader,
+) -> Result<(), Error> {
+    println!("[server] handling upload file");
+    let mut file = file.ok_or(Error::File("invalid file: cannot write".to_string()))?;
+    let mut read = 0;
+    let mut buffer = Vec::with_capacity(DEFAULT_STREAM_READ_BUF_SIZE);
 
-    let mut offset = 0;
-    while let Ok(n) = file.read_buf(&mut buf).await {
+    while let Ok(n) = rx.read_buf(&mut buffer).await {
+        read += n;
         if n == 0 {
-            break;
+            return Err(Error::Connection("[server] broken pipe".to_string()));
         }
-        let download_resp = Protocol::DownloadResp(DownloadResp {
-            file_name: download.file_name.clone(),
-            data: buf.to_vec(),
-            chunk_offset: download.chunk_offset,
-            offset,
-            index: download.index,
-        });
-        tx.send(serde_json::to_vec(&download_resp).unwrap()).await?;
-        buf.clear();
-
-        offset += n as u64 - AES_GCM_TAG_SIZE;
+        println!("[server] read: {}", read);
+        file.write_all(&buffer[..n]).await?;
+        buffer.clear();
     }
+
     Ok(())
+}
+
+pub async fn handle_download_file(mut tx: SendStream, file: Option<File>) -> Result<(), Error> {
+    println!("[server] handling download file");
+    let mut file = file.ok_or(Error::File("invalid file: cannot read".to_string()))?;
+    let mut buffer = Vec::with_capacity(DEFAULT_FILE_READ_SIZE + crypto::AES_256_TAG_SIZE);
+
+    while let Ok(n) = file.read_buf(&mut buffer).await {
+        if n == 0 {
+            return Ok(());
+        }
+        tx.write(&buffer[..n]).await?;
+        println!("[server] write: {}", n);
+        buffer.clear();
+    }
+
+    Ok(())
+}
+
+pub async fn get_file_from_header(header: &Header, base_path: &Path) -> Result<File, Error> {
+    match header {
+        Header::UploadRequestHeader(upload_header) => {
+            let node_id_path = base_path.join(&upload_header.node_id);
+            let _ = tokio::fs::create_dir_all(&node_id_path).await;
+
+            let path = base_path.join(&upload_header.node_id).join(format!(
+                "{}-{}",
+                upload_header.file_name, upload_header.index
+            ));
+
+            OpenOptions::new()
+                .create(true)
+                .truncate(true)
+                .write(true)
+                .open(&path)
+                .await
+                .map_err(|e| {
+                    Error::File(format!("cannot create new file: {:?}, reason={}", path, e))
+                })
+        }
+        Header::DownloadRequestHeader(download_request_header) => {
+            let path = base_path
+                .join(&download_request_header.node_id)
+                .join(format!(
+                    "{}-{}",
+                    download_request_header.file_name, download_request_header.index
+                ));
+
+            OpenOptions::new()
+                .read(true)
+                .open(&path)
+                .await
+                .map_err(|e| Error::File(format!("cannot read file: {:?}, reason={}", path, e)))
+        }
+        _ => Err(Error::InvalidOperation(format!(
+            "not supported for header: {:?}",
+            header
+        ))),
+    }
 }

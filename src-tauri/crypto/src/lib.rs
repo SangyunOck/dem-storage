@@ -1,62 +1,54 @@
-pub mod fs;
+pub mod error;
+pub use error::Error;
 
-use aes_gcm::aead::{Aead, Nonce};
-use aes_gcm::{Aes256Gcm, Key, KeyInit};
-use eyre::eyre;
+use byteorder::ByteOrder;
+use ring::aead::BoundKey;
+use ring::aead::SealingKey;
+use ring::aead::{Aad, NonceSequence, OpeningKey, UnboundKey, AES_256_GCM, NONCE_LEN};
+use ring::error::Unspecified;
+use std::cmp::Ordering;
+use std::iter;
 
-pub const AES_GCM_TAG_SIZE: u64 = 16;
+const AES_256_KEY_SIZE: usize = 32;
+pub const AES_256_TAG_SIZE: usize = 16;
 
-pub fn encrypt_aes256gcm(
-    key: [u8; 32],
-    nonce: [u8; 12],
-    plain_text: impl AsRef<[u8]>,
-) -> eyre::Result<Vec<u8>> {
-    let cipher = Aes256Gcm::new(&Key::<Aes256Gcm>::from(key));
-    let nonce = Nonce::<Aes256Gcm>::from(nonce);
-    let cipher_text = cipher
-        .encrypt(&nonce, plain_text.as_ref())
-        .map_err(|e| eyre!("cannot encrypt plain text: {e}"))?;
-    Ok(cipher_text)
+fn adjust_key(mut key: Vec<u8>) -> [u8; AES_256_KEY_SIZE] {
+    let key = {
+        match key.len().cmp(&AES_256_KEY_SIZE) {
+            Ordering::Greater => key[..AES_256_KEY_SIZE].to_vec(),
+            _ => {
+                key.extend(iter::repeat(0).take(AES_256_KEY_SIZE - key.len()));
+                key
+            }
+        }
+    };
+
+    // safety: already checked size
+    key.try_into().unwrap()
+}
+pub fn encrypt_aes_256(key: Vec<u8>, mut data: Vec<u8>, nonce: u64) -> Result<Vec<u8>, Error> {
+    let key = adjust_key(key);
+    // safety: already checked size
+    let mut key = SealingKey::new(UnboundKey::new(&AES_256_GCM, &key).unwrap(), Nonce(nonce));
+    key.seal_in_place_append_tag(Aad::empty(), &mut data)
+        .map_err(|e| Error::Encrypt(e.to_string()))?;
+    Ok(data.to_vec())
 }
 
-pub fn decrypt_aes256gcm(
-    key: [u8; 32],
-    nonce: [u8; 12],
-    cipher_text: impl AsRef<[u8]>,
-) -> eyre::Result<Vec<u8>> {
-    let cipher = Aes256Gcm::new(&Key::<Aes256Gcm>::from(key));
-    let nonce = Nonce::<Aes256Gcm>::from(nonce);
-    let plain_text = cipher
-        .decrypt(&nonce, cipher_text.as_ref())
-        .map_err(|e| eyre!("cannot decrypt cipher text: {e}"))?;
-    Ok(plain_text)
+pub fn decrypt_aes_256(key: Vec<u8>, mut data: Vec<u8>, nonce: u64) -> Result<Vec<u8>, Error> {
+    let key = adjust_key(key);
+    let mut key = OpeningKey::new(UnboundKey::new(&AES_256_GCM, &key).unwrap(), Nonce(nonce));
+    key.open_in_place(Aad::empty(), &mut data)
+        .map_err(|e| Error::Decrypt(e.to_string()))?;
+    Ok(data[..data.len() - AES_256_TAG_SIZE].to_vec())
 }
 
-pub fn split_password(password: &str) -> ([u8; 12], [u8; 32]) {
-    let password_length = password.len();
-    let mut nonce = [0_u8; 12];
-    let target_len = password_length.min(nonce.len());
-    let nonce_bytes = &password.as_bytes()[..target_len];
-    nonce[..target_len].copy_from_slice(nonce_bytes);
-
-    let mut key = [0_u8; 32];
-    let target_len = password_length.min(key.len());
-    let key_bytes = &password.as_bytes()[..target_len];
-    key[..target_len].copy_from_slice(key_bytes);
-
-    (nonce, key)
-}
-
-#[cfg(test)]
-mod test_crypto {
-    use crate::encrypt_aes256gcm;
-
-    #[test]
-    fn test_encrypt() {
-        let encrypted = encrypt_aes256gcm([0; 32], [0; 12], b"abc").unwrap();
-        assert_eq!(
-            encrypted,
-            [175, 197, 35, 84, 16, 158, 246, 90, 47, 92, 203, 179, 240, 82, 9, 120, 20, 223, 60]
-        );
+struct Nonce(u64);
+impl NonceSequence for Nonce {
+    fn advance(&mut self) -> Result<ring::aead::Nonce, Unspecified> {
+        let mut buf = [0; NONCE_LEN];
+        byteorder::LittleEndian::write_u64(&mut buf, self.0);
+        self.0 += 1;
+        Ok(ring::aead::Nonce::assume_unique_for_key(buf))
     }
 }

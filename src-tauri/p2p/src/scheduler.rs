@@ -1,38 +1,36 @@
+use crate::error::Error;
 use crate::types::{Chunk, Node, ScheduledChunk};
 
-use eyre::Result;
 use itertools::Itertools;
-use std::io::SeekFrom;
 use tokio::fs::OpenOptions;
-use tokio::io::AsyncSeekExt;
 
-async fn get_file_offsets(file_path: &str, chunks: u64) -> Result<Vec<Chunk>> {
-    let mut file = OpenOptions::new().read(true).open(file_path).await?;
+async fn get_file_offsets(file_path: &str, chunks: u64) -> Result<Vec<Chunk>, Error> {
+    let file = OpenOptions::new().read(true).open(file_path).await?;
+
+    let total_size = file.metadata().await?.len();
+    let chunk_size = total_size / chunks;
+    let mut remainder = total_size % chunks;
 
     let mut offsets = vec![];
-    let total_size = file.seek(SeekFrom::End(0)).await?;
-    let mut size = total_size;
-    let chunk_size = size / chunks + 1;
-    let mut idx = 0;
-    while size >= chunk_size {
+    let mut current_offset = 0;
+
+    for index in 0..chunks {
+        let mut current_chunk_size = chunk_size;
+
+        if remainder > 0 {
+            current_chunk_size += 1;
+            remainder -= 1;
+        }
+
         offsets.push(Chunk {
             file_path: file_path.to_string(),
-            chunk_size,
-            index: idx,
-            offset: chunk_size * idx as u64,
-            total_size,
+            chunk_size: current_chunk_size + crypto::AES_256_TAG_SIZE as u64,
+            offset: current_offset,
+            index: index as u8,
         });
-        size -= chunk_size;
-        idx += 1;
-    }
 
-    offsets.push(Chunk {
-        file_path: file_path.to_string(),
-        chunk_size: size,
-        index: idx,
-        offset: chunk_size * idx as u64,
-        total_size,
-    });
+        current_offset += current_chunk_size;
+    }
 
     Ok(offsets)
 }
@@ -40,7 +38,7 @@ async fn get_file_offsets(file_path: &str, chunks: u64) -> Result<Vec<Chunk>> {
 pub async fn get_scheduled_chunks(
     file_path: &str,
     nodes: Vec<Node>,
-) -> Result<Vec<ScheduledChunk>> {
+) -> Result<Vec<ScheduledChunk>, Error> {
     let node_len = nodes.len();
     let node_combinations = nodes
         .into_iter()
@@ -61,4 +59,30 @@ pub async fn get_scheduled_chunks(
     }
 
     Ok(scheduled_chunk)
+}
+
+#[cfg(test)]
+mod test {
+    use crate::scheduler::get_scheduled_chunks;
+
+    #[tokio::test]
+    async fn test() {
+        let nodes = vec![
+            crate::types::Node {
+                peer_id: "node_1".to_string(),
+                endpoint: "".to_string(),
+            },
+            crate::types::Node {
+                peer_id: "node_2".to_string(),
+                endpoint: "".to_string(),
+            },
+        ];
+        let chunks = get_scheduled_chunks(
+            "/Users/sangyun/Documents/workspace/quic-p2p-transfer/target/release.zip",
+            nodes,
+        )
+        .await
+        .unwrap();
+        println!("{:#?}", chunks);
+    }
 }

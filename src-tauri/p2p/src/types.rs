@@ -1,62 +1,74 @@
+use crate::consts::DEFAULT_INIT_BUF_SIZE;
+use crate::error::Error;
+
+use quinn::RecvStream;
 use serde::{Deserialize, Serialize};
+use tokio::io::AsyncReadExt;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum Protocol {
-    Upload(Upload),
-    Download(Download),
-    DownloadResp(DownloadResp),
-    Abort,
+pub enum Header {
+    UploadRequestHeader(ProtocolUploadHeader),
+    UploadReady(ProtocolUploadReady),
+    DownloadRequestHeader(ProtocolRequestDownloadHeader),
+    DownloadMetadata(ProtocolDownloadMetadata),
+}
+
+pub async fn get_init_header_from_stream(rx: &mut RecvStream) -> Result<Header, Error> {
+    let mut init_buffer = Vec::with_capacity(DEFAULT_INIT_BUF_SIZE);
+    let n = rx.read_buf(&mut init_buffer).await?;
+    if n == 0 {
+        return Err(Error::Connection("broken pipe".to_string()));
+    }
+    let header = bincode::deserialize::<Header>(&init_buffer).expect("invalid protocol");
+    drop(init_buffer);
+    Ok(header)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UploadReq {
-    pub peer_id: String,
+pub struct ProtocolUploadHeader {
+    pub node_id: String,
+    pub file_name: String,
+    pub index: u8,
+    pub len: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProtocolUploadReady;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProtocolRequestDownloadHeader {
+    pub node_id: String,
+    pub file_name: String,
+    pub index: u8,
+    pub offset: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProtocolDownloadMetadata {
+    pub valid: bool,
+    pub file_name: String,
+    pub index: u8,
+    pub len: u64,
+    pub offset: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct UploadFileRequest {
+    pub node_id: String,
     pub password: String,
     pub file_path: String,
+    pub index: u8,
     pub offset: u64,
-    pub limit: u64,
-    pub index: u8,
+    pub len: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Upload {
-    pub peer_id: String,
-    pub file_name: String,
-    pub data: Vec<u8>,
-    pub offset: u64,
-    pub index: u8,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Download {
-    pub peer_id: String,
-    pub file_name: String,
-    pub chunk_offset: u64,
-    pub index: u8,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DownloadReq {
-    pub peer_id: String,
-    pub file_name: String,
-    pub index: u8,
-    pub chunk_offset: u64,
+#[derive(Debug, Clone)]
+pub struct DownloadFileRequest {
+    pub node_id: String,
     pub password: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DownloadResp {
     pub file_name: String,
-    pub data: Vec<u8>,
-    pub chunk_offset: u64,
-    pub offset: u64,
     pub index: u8,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum Command {
-    Upload(UploadReq),
-    DownloadReq(DownloadReq),
+    pub offset: u64,
 }
 
 #[derive(Debug, Clone)]
@@ -70,7 +82,6 @@ pub struct Chunk {
     pub chunk_size: u64,
     pub offset: u64,
     pub index: u8,
-    pub total_size: u64,
 }
 
 #[derive(Debug, Clone)]
