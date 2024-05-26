@@ -1,5 +1,7 @@
 pub mod client;
 mod consts;
+mod error;
+pub mod node;
 pub mod scheduler;
-pub mod server;
+mod server;
 pub mod types;
