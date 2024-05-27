@@ -1,16 +1,10 @@
 import { memo, useEffect, useRef } from "react";
-import {
-  Box,
-  Grid,
-  LinearProgress,
-  ListItem,
-  ListItemButton,
-  Typography,
-} from "@mui/material";
+import { Box, Grid, LinearProgress, ListItem, Typography } from "@mui/material";
 import { CheckCircle } from "@mui/icons-material";
 import dayjs from "dayjs";
 
 import { uploadFileSliceType } from "../redux/types.ts";
+import { ListItemBase } from "./styles.tsx";
 
 interface Props {
   uploadFile: uploadFileSliceType;
@@ -29,9 +23,9 @@ function UploadFileListItem(props: Props) {
 
   return (
     <ListItem disablePadding>
-      <ListItemButton>
-        <Grid container spacing={2} py={0.5}>
-          <Grid item container xs>
+      <ListItemBase>
+        <Grid container spacing={1} p={2} pr={1}>
+          <Grid item container xs spacing={1}>
             <Grid item xs={12}>
               <div style={{ width: `270px`, position: "relative" }}>
                 <Typography variant={"fileTitle"}>{name}</Typography>
@@ -68,7 +62,7 @@ function UploadFileListItem(props: Props) {
             <Typography variant={"overline"}>{timeStamp.current}</Typography>
           </Grid>
         </Grid>
-      </ListItemButton>
+      </ListItemBase>
     </ListItem>
   );
 }

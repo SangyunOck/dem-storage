@@ -25,6 +25,11 @@ export const mui_theme = createTheme({
         variant: "contained",
       },
     },
+    MuiChip: {
+      defaultProps: {
+        clickable: true,
+      },
+    },
     MuiCard: {
       defaultProps: {
         variant: "outlined",
@@ -42,7 +47,7 @@ export const mui_theme = createTheme({
       defaultProps: {
         noWrap: true,
         variantMapping: {
-          fileTitle: "h4",
+          fileTitle: "h6",
         },
       },
     },
@@ -53,6 +58,8 @@ export const mui_theme = createTheme({
   typography: {
     fileTitle: {
       fontWeight: 600,
+      fontSize: "16px",
+      textAlign: "left",
     },
   },
 });

@@ -1,6 +1,6 @@
-import { MouseEvent, SyntheticEvent, useCallback, useState } from "react";
+import { MouseEvent, useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
-import { Alert, Button, Snackbar } from "@mui/material";
+import { Button } from "@mui/material";
 import { CloudUpload } from "@mui/icons-material";
 import { invoke } from "@tauri-apps/api/tauri";
 import { open } from "@tauri-apps/api/dialog";
@@ -11,6 +11,7 @@ import { addFile } from "../redux/slices/uploadSlice.ts";
 import { serverFetcher } from "../fetchers.ts";
 import { useAppSelector } from "../redux/store.ts";
 import { uploadFileType } from "../redux/types.ts";
+import Notificator from "./Notificator.tsx";
 
 export type NodeType = {
   peer_id: string;
@@ -82,28 +83,17 @@ function AddFileBtn() {
     [pw],
   );
 
-  const handleClose = (_?: SyntheticEvent | Event, reason?: string) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setOpenAlarm(false);
-  };
-
   return (
     <>
       <Button onClick={onClickBtn} startIcon={<CloudUpload />}>
         파일 업로드
       </Button>
-      <Snackbar open={openAlarm} autoHideDuration={3000} onClose={handleClose}>
-        <Alert
-          onClose={handleClose}
-          severity={"error"}
-          variant={"filled"}
-          sx={{ width: "100%" }}
-        >
-          서버에 연결할 수 없습니다.
-        </Alert>
-      </Snackbar>
+      <Notificator
+        open={openAlarm}
+        setOpen={setOpenAlarm}
+        message={"서버에 연결할 수 없습니다."}
+        severity={"error"}
+      />
     </>
   );
 }

@@ -31,7 +31,7 @@ function NewMember() {
             </Typography>
           </CardContent>
         </Card>
-        <Button onClick={() => navigate("/member/login")}>
+        <Button onClick={() => navigate("/member/login?retry=true")}>
           로그인 하러가기
         </Button>
       </Stack>

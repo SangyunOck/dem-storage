@@ -4,7 +4,7 @@ import { Store } from "tauri-plugin-store-api";
 
 const store = new Store(".info.dat");
 
-export function AutoLoginSwitch() {
+function AutoLoginSwitch() {
   const [autoLogin, setAutoLogin] = useState(false);
 
   const handleSwitch = useCallback(
@@ -30,3 +30,5 @@ export function AutoLoginSwitch() {
 
   return <Switch checked={autoLogin} onClick={handleSwitch} />;
 }
+
+export default AutoLoginSwitch;

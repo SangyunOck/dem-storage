@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import _ from "underscore";
-import { Paper, Box, Stack, useTheme, useMediaQuery } from "@mui/material";
+import { Box, Stack, useTheme, useMediaQuery } from "@mui/material";
 
 import SideBar from "../components/SideBar.tsx";
 import AddFileBtn from "../components/AddFileBtn.tsx";
@@ -50,9 +50,9 @@ function MainLayout() {
           <UploadFileListBtn />
           <AddFileBtn />
         </Stack>
-        <Paper sx={{ height: "calc(100% - 50px)" }}>
+        <Box sx={{ height: "calc(100% - 50px)" }}>
           <Outlet />
-        </Paper>
+        </Box>
       </Box>
     </Box>
   );
