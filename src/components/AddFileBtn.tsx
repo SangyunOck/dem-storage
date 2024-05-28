@@ -69,11 +69,7 @@ function AddFileBtn() {
       if (!uploadFile) return;
 
       dispatch(addFile(uploadFile));
-      invoke("upload", {
-        nodes: nodes,
-        path: uploadFile.path,
-        userPassword: pw,
-      })
+      invoke("upload_handler")
         .then(async (res) => {
           await store.set(uploadFile?.path, { results: res });
           await store.save();
