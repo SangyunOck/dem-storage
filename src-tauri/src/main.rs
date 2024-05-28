@@ -9,7 +9,7 @@ use tauri::State;
 use tokio::sync::mpsc::unbounded_channel;
 
 #[tauri::command]
-async fn upload_handler<'a>(node2: State<'a, p2p::node::Node>) -> Result<(), ()> {
+async fn upload_handler<'a>(node2: State<'a, Arc<p2p::node::Node>>) -> Result<(), ()> {
     // TODO: request nodes from main server
     let nodes = vec![
         Node {
@@ -59,7 +59,7 @@ async fn main() -> eyre::Result<()> {
         PathBuf::from("/Users/sangyun/Documents/workspace/dem-storage/demo/client/"),
     );
     let (err_tx, _) = unbounded_channel();
-    let node_1_handle = node1.spin_up(port, err_tx).await.unwrap();
+    let node_1_handle = node1.spin_up(8080, err_tx).await.unwrap();
 
     let node2 = Arc::new(p2p::node::Node::new(
         "node_2".to_string(),
