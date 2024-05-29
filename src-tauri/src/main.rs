@@ -9,7 +9,7 @@ use tauri::State;
 use tokio::sync::mpsc::unbounded_channel;
 
 #[tauri::command]
-async fn upload_handler<'a>(node2: State<'a, Arc<p2p::node::Node>>) -> Result<(), ()> {
+async fn upload_handler<'a>(upload_file_path: String) -> Result<String, ()> {
     // TODO: request nodes from main server
     let nodes = vec![
         Node {
@@ -22,8 +22,15 @@ async fn upload_handler<'a>(node2: State<'a, Arc<p2p::node::Node>>) -> Result<()
         },
     ];
 
+    let node2 = Arc::new(p2p::node::Node::new(
+            "node_2".to_string(),
+            PathBuf::from("/Users/jeongjung-il/WebstormProjects/dem-storage/demo/server/"),
+            PathBuf::from("/Users/jeongjung-il/WebstormProjects/dem-storage/demo/client/"),
+        ));
+
+    let mut tick = tokio::time::Instant::now();
     let mut upload_handles = vec![];
-    for sc in get_scheduled_chunks("/Users/sangyun/Documents/workspace/quic-p2p-transfer/target.zip", nodes).await.unwrap() {
+    for sc in get_scheduled_chunks(&upload_file_path, nodes).await.unwrap() {
         let handle = node2
             .upload_file(p2p::types::UploadFileRequest {
                 node_id: "node_2".to_string(),
@@ -43,7 +50,61 @@ async fn upload_handler<'a>(node2: State<'a, Arc<p2p::node::Node>>) -> Result<()
         t.await.unwrap();
     }
 
-    Ok(())
+    println!("{:?}", tick.elapsed());
+    Ok(format!("ok"))
+
+}
+
+#[tauri::command]
+async fn download_handler<'a>(download_file_path: String, download_file_name: String) -> Result<String, ()> {
+    let nodes = vec![
+            Node {
+                endpoint: "127.0.0.1:8080".to_string(),
+                peer_id: "node_1".to_string(),
+            },
+            Node {
+                endpoint: "127.0.0.1:8080".to_string(),
+                peer_id: "node_1".to_string(),
+            },
+        ];
+
+        let node2 = Arc::new(p2p::node::Node::new(
+                "node_2".to_string(),
+                PathBuf::from("/Users/jeongjung-il/WebstormProjects/dem-storage/demo/server/"),
+                PathBuf::from("/Users/jeongjung-il/WebstormProjects/dem-storage/demo/client/"),
+            ));
+
+        let mut tick = tokio::time::Instant::now();
+        let mut download_handles = vec![];
+        for sc in get_scheduled_chunks(
+            &download_file_path,
+            nodes,
+        )
+        .await
+        .unwrap()
+        {
+            let handle = node2
+                .download_file(
+                    p2p::types::DownloadFileRequest {
+                        node_id: node2.get_node_id(),
+                        password: "password".to_string(),
+                        file_name: download_file_name.clone(),
+                        index: sc.chunk.index,
+                        offset: sc.chunk.offset,
+                    },
+                    "127.0.0.1:8080".to_string(),
+                    "node_1".to_string(),
+                )
+                .await
+                .unwrap();
+            download_handles.push(handle);
+        }
+        for h in download_handles {
+            h.await.unwrap();
+        }
+
+        println!("{:?}", tick.elapsed());
+        Ok(format!("ok"))
 }
 
 #[tokio::main]
@@ -55,16 +116,16 @@ async fn main() -> eyre::Result<()> {
 
     let node1 = p2p::node::Node::new(
         "node_1".to_string(),
-        PathBuf::from("/Users/sangyun/Documents/workspace/dem-storage/demo/server/"),
-        PathBuf::from("/Users/sangyun/Documents/workspace/dem-storage/demo/client/"),
+        PathBuf::from("/Users/jeongjung-il/WebstormProjects/dem-storage/demo/server/"),
+        PathBuf::from("/Users/jeongjung-il/WebstormProjects/dem-storage/demo/client/"),
     );
     let (err_tx, _) = unbounded_channel();
     let node_1_handle = node1.spin_up(8080, err_tx).await.unwrap();
 
     let node2 = Arc::new(p2p::node::Node::new(
         "node_2".to_string(),
-        PathBuf::from("/Users/sangyun/Documents/workspace/dem-storage/demo/server/"),
-        PathBuf::from("/Users/sangyun/Documents/workspace/dem-storage/demo/client/"),
+        PathBuf::from("/Users/jeongjung-il/WebstormProjects/dem-storage/demo/server/"),
+        PathBuf::from("/Users/jeongjung-il/WebstormProjects/dem-storage/demo/client/"),
     ));
     let (server_err_tx, _server_err_rx) = unbounded_channel();
     // TODO: create channel for client request
@@ -72,48 +133,9 @@ async fn main() -> eyre::Result<()> {
 
     tauri::Builder::default()
         .manage(node2.clone())
-        .invoke_handler(tauri::generate_handler![upload_handler])
+        .invoke_handler(tauri::generate_handler![upload_handler, download_handler])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-
-    let nodes = vec![
-        Node {
-            endpoint: "127.0.0.1:8080".to_string(),
-            peer_id: "node_1".to_string(),
-        },
-        Node {
-            endpoint: "127.0.0.1:8080".to_string(),
-            peer_id: "node_1".to_string(),
-        },
-    ];
-
-    let mut download_handles = vec![];
-    for sc in get_scheduled_chunks(
-        "/Users/sangyun/Documents/workspace/quic-p2p-transfer/target.zip",
-        nodes,
-    )
-    .await
-    .unwrap()
-    {
-        let handle = node2
-            .download_file(
-                p2p::types::DownloadFileRequest {
-                    node_id: node2.get_node_id(),
-                    password: "password".to_string(),
-                    file_name: "target.zip".to_string(),
-                    index: sc.chunk.index,
-                    offset: sc.chunk.offset,
-                },
-                "127.0.0.1:8080".to_string(),
-                "node_1".to_string(),
-            )
-            .await
-            .unwrap();
-        download_handles.push(handle);
-    }
-    for h in download_handles {
-        h.await.unwrap();
-    }
-
     Ok(())
 }
+

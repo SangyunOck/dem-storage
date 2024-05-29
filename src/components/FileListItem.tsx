@@ -34,12 +34,18 @@ function FileListItem({ myFile }: Props) {
   const dispatch = useDispatch();
 
   const handleDownload = useCallback(() => {
-    store.get<{ results: ScheduledChunkType[] }>(myFile.path).then((val) => {
-      val &&
-        invoke("download", { scheduledChunks: val.results })
-          .then((res) => console.log(res))
-          .catch((err) => console.error(err));
-    });
+    invoke("download_handler", {
+      downloadFilePath: myFile.path,
+      downloadFileName: myFile.name,
+    })
+      .then((res) => console.log(res))
+      .catch((err) => console.error(err));
+    // store.get<{ results: ScheduledChunkType[] }>(myFile.path).then((val) => {
+    //   val &&
+    //     invoke("download_handler", { downloadFilePath: val.results })
+    //       .then((res) => console.log(res))
+    //       .catch((err) => console.error(err));
+    // });
   }, []);
 
   const handleDelete = useCallback(() => {

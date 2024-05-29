@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useState } from "react";
+import { MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Button } from "@mui/material";
 import { CloudUpload } from "@mui/icons-material";
@@ -7,11 +7,16 @@ import { open } from "@tauri-apps/api/dialog";
 import { Store } from "tauri-plugin-store-api";
 import _ from "underscore";
 
-import { addFile } from "../redux/slices/uploadSlice.ts";
+import {
+  addFile,
+  addProgress,
+  setProgress,
+} from "../redux/slices/uploadSlice.ts";
 import { serverFetcher } from "../fetchers.ts";
 import { useAppSelector } from "../redux/store.ts";
 import { uploadFileType } from "../redux/types.ts";
 import Notificator from "./Notificator.tsx";
+import UploadTest from "../test/UploadTest.tsx";
 
 export type NodeType = {
   peer_id: string;
@@ -23,6 +28,8 @@ const store = new Store(".scheduled_nodes.dat");
 function AddFileBtn() {
   const dispatch = useDispatch();
   const pw = useAppSelector((state) => state.user.value.password);
+  const currentId = useRef(0);
+  const [startInterval, killInterval, killAllIntervals] = UploadTest();
   const [openAlarm, setOpenAlarm] = useState(false);
 
   const onClickBtn = useCallback(
@@ -69,10 +76,14 @@ function AddFileBtn() {
       if (!uploadFile) return;
 
       dispatch(addFile(uploadFile));
-      invoke("upload_handler")
-        .then(async (res) => {
-          await store.set(uploadFile?.path, { results: res });
-          await store.save();
+      startInterval(currentId.current, 10, 1000);
+      invoke("upload_handler", { uploadFilePath: uploadFile.path })
+        .then((res) => {
+          console.log(res);
+          // dispatch(addProgress({ id: currentId.current, progress: 101 }));
+          currentId.current = currentId.current + 1;
+          // await store.set(uploadFile?.path, { results: res });
+          // await store.save();
         })
         .catch((err) => console.error(err));
     },
