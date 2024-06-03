@@ -1,7 +1,8 @@
 import { useMemo } from "react";
-import { Box, Grid, LinearProgress, Typography } from "@mui/material";
+import { Box, Grid, Typography } from "@mui/material";
 
 import { useAppSelector } from "../redux/store.ts";
+import { BorderLinearProgress } from "./styles.tsx";
 
 function UserInfoBox() {
   const id = useAppSelector((state) => state.user.value.id);
@@ -25,7 +26,10 @@ function UserInfoBox() {
               {currentValue}GB/{maxValue}GB
             </Typography>
           </div>
-          <LinearProgress variant={"determinate"} value={percentageValue} />
+          <BorderLinearProgress
+            variant={"determinate"}
+            value={percentageValue}
+          />
         </Grid>
       </Grid>
     </Box>

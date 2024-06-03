@@ -12,10 +12,10 @@ use tokio::sync::mpsc::unbounded_channel;
 async fn upload_handler<'a>(upload_file_path: String) -> Result<String, ()> {
     // TODO: request nodes from main server
     let nodes = vec![
-        Node {
-            endpoint: "127.0.0.1:8080".to_string(),
-            peer_id: "node_1".to_string(),
-        },
+//         Node {
+//             endpoint: "127.0.0.1:8080".to_string(),
+//             peer_id: "node_1".to_string(),
+//         },
         Node {
             endpoint: "127.0.0.1:8080".to_string(),
             peer_id: "node_1".to_string(),
@@ -40,8 +40,8 @@ async fn upload_handler<'a>(upload_file_path: String) -> Result<String, ()> {
                 offset: sc.chunk.offset,
                 len: sc.chunk.chunk_size,
             },
-             "127.0.0.1:8080".to_string(),
-             "node_1".to_string())
+            sc.node.endpoint.clone(),
+            sc.node.peer_id.clone())
             .await.unwrap();
         upload_handles.push(handle);
     }
@@ -58,13 +58,13 @@ async fn upload_handler<'a>(upload_file_path: String) -> Result<String, ()> {
 #[tauri::command]
 async fn download_handler<'a>(download_file_path: String, download_file_name: String) -> Result<String, ()> {
     let nodes = vec![
+//             Node {
+//                 endpoint: "127.0.0.1:8080".to_string(),
+//                 peer_id: "node_1".to_string(),
+//             },
             Node {
-                endpoint: "127.0.0.1:8080".to_string(),
-                peer_id: "node_1".to_string(),
-            },
-            Node {
-                endpoint: "127.0.0.1:8080".to_string(),
-                peer_id: "node_1".to_string(),
+                endpoint: "118.235.66.105:9090".to_string(),
+                peer_id: "node_abc".to_string(),
             },
         ];
 
@@ -92,9 +92,9 @@ async fn download_handler<'a>(download_file_path: String, download_file_name: St
                         index: sc.chunk.index,
                         offset: sc.chunk.offset,
                     },
-                    "127.0.0.1:8080".to_string(),
-                    "node_1".to_string(),
-                )
+                    sc.node.endpoint.clone(),
+                    sc.node.peer_id.clone()
+                    )
                 .await
                 .unwrap();
             download_handles.push(handle);
@@ -114,13 +114,13 @@ async fn main() -> eyre::Result<()> {
         .parse()
         .unwrap_or(8080);
 
-    let node1 = p2p::node::Node::new(
-        "node_1".to_string(),
-        PathBuf::from("/Users/jeongjung-il/WebstormProjects/dem-storage/demo/server/"),
-        PathBuf::from("/Users/jeongjung-il/WebstormProjects/dem-storage/demo/client/"),
-    );
-    let (err_tx, _) = unbounded_channel();
-    let node_1_handle = node1.spin_up(8080, err_tx).await.unwrap();
+//     let node1 = p2p::node::Node::new(
+//         "node_1".to_string(),
+//         PathBuf::from("/Users/jeongjung-il/WebstormProjects/dem-storage/demo/server/"),
+//         PathBuf::from("/Users/jeongjung-il/WebstormProjects/dem-storage/demo/client/"),
+//     );
+//     let (err_tx, _) = unbounded_channel();
+//     let node_1_handle = node1.spin_up(0, err_tx).await.unwrap();
 
     let node2 = Arc::new(p2p::node::Node::new(
         "node_2".to_string(),
@@ -132,8 +132,8 @@ async fn main() -> eyre::Result<()> {
     let node_2_handle = node2.spin_up(9090, server_err_tx).await.unwrap();
 
     tauri::Builder::default()
-        .manage(node2.clone())
         .invoke_handler(tauri::generate_handler![upload_handler, download_handler])
+        .plugin(tauri_plugin_store::Builder::default().build())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
     Ok(())

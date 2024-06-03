@@ -30,6 +30,12 @@ export const mui_theme = createTheme({
         clickable: true,
       },
     },
+    MuiList: {
+      defaultProps: {
+        disablePadding: true,
+        dense: true,
+      },
+    },
     MuiCard: {
       defaultProps: {
         variant: "outlined",
@@ -58,7 +64,7 @@ export const mui_theme = createTheme({
   typography: {
     fileTitle: {
       fontWeight: 600,
-      fontSize: "16px",
+      fontSize: "14.5px",
       textAlign: "left",
     },
   },

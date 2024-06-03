@@ -1,9 +1,18 @@
-import { Box, ButtonBase, styled } from "@mui/material";
+import {
+  ButtonBase,
+  LinearProgress,
+  linearProgressClasses,
+  ListItemButton,
+  styled,
+} from "@mui/material";
 
 export const CustomButtonBase = styled(ButtonBase)(({ theme }) => ({
   borderRadius: theme.spacing(1),
-  padding: theme.spacing(1),
-  ":hover": { backgroundColor: theme.palette.divider },
+  padding: theme.spacing(0),
+  ":hover": { backgroundColor: theme.palette.action.hover },
+  "> *": {
+    padding: theme.spacing(1),
+  },
 }));
 
 export const ScrollBox = styled("div")(({ theme }) => ({
@@ -24,11 +33,9 @@ export const ScrollBox = styled("div")(({ theme }) => ({
   },
 }));
 
-export const ListItemBase = styled(Box)(({ theme }) => ({
-  width: "100%",
+export const ListItemBase = styled(ListItemButton)(({ theme }) => ({
   borderRadius: theme.spacing(0.5),
   cursor: "default",
-  ":hover": { backgroundColor: theme.palette.divider },
 }));
 
 export const ListItemFunctionButtonBase = styled(ButtonBase)(({ theme }) => ({
@@ -36,5 +43,17 @@ export const ListItemFunctionButtonBase = styled(ButtonBase)(({ theme }) => ({
   color: theme.palette.grey[500],
   ":hover": {
     color: theme.palette.text.primary,
+  },
+}));
+
+export const BorderLinearProgress = styled(LinearProgress)(({ theme }) => ({
+  height: 6,
+  borderRadius: 4,
+  [`&.${linearProgressClasses.colorPrimary}`]: {
+    backgroundColor: theme.palette.text,
+  },
+  [`& .${linearProgressClasses.bar}`]: {
+    borderRadius: 4,
+    backgroundColor: theme.palette.primary.dark,
   },
 }));

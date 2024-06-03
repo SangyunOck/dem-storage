@@ -1,5 +1,6 @@
 import { useCallback, useState, MouseEvent } from "react";
 import {
+  Badge,
   Box,
   CircularProgress,
   List,
@@ -41,29 +42,41 @@ function UploadFileListBtn() {
       return e.currentTarget;
     });
   }, []);
-
   return (
     <>
       <CustomButtonBase
         onClick={onClickAlarm}
-        sx={{ position: "relative", borderRadius: "50%" }}
+        sx={{
+          position: "relative",
+          borderRadius: "50%",
+        }}
       >
-        <Upload />
-        <CircularProgress
-          variant={"determinate"}
-          value={
-            unCompletedFiles.length > 0
-              ? unCompletedFiles.reduce((a, f) => a + f.progress, 0) /
-                unCompletedFiles.length
-              : 0
-          }
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            zIndex: 1,
-          }}
-        />
+        <Box>
+          <Badge
+            variant={"dot"}
+            invisible={
+              files.findIndex((v) => !v.isChecked && v.isCompleted) < 0
+            }
+            color={"info"}
+          >
+            <Upload />
+          </Badge>
+          <CircularProgress
+            variant={"determinate"}
+            value={
+              unCompletedFiles.length > 0
+                ? unCompletedFiles.reduce((a, f) => a + f.progress, 0) /
+                  unCompletedFiles.length
+                : 0
+            }
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              zIndex: 1,
+            }}
+          />
+        </Box>
       </CustomButtonBase>
       <Popover
         open={!!anchorEl}
@@ -84,8 +97,11 @@ function UploadFileListBtn() {
               <EmptyAlarms />
             ) : (
               <List disablePadding>
-                {files.map((f) => (
-                  <UploadFileListItem key={_.uniqueId(f.name)} uploadFile={f} />
+                {[...files].reverse().map((f) => (
+                  <UploadFileListItem
+                    key={_.uniqueId(f.file.name)}
+                    uploadFile={f}
+                  />
                 ))}
               </List>
             )}

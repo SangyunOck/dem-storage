@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { MouseEvent, useCallback, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Button } from "@mui/material";
 import { CloudUpload } from "@mui/icons-material";
@@ -7,14 +7,10 @@ import { open } from "@tauri-apps/api/dialog";
 import { Store } from "tauri-plugin-store-api";
 import _ from "underscore";
 
-import {
-  addFile,
-  addProgress,
-  setProgress,
-} from "../redux/slices/uploadSlice.ts";
+import { addFile } from "../redux/slices/uploadSlice.ts";
 import { serverFetcher } from "../fetchers.ts";
 import { useAppSelector } from "../redux/store.ts";
-import { uploadFileType } from "../redux/types.ts";
+import { fileType } from "../redux/types.ts";
 import Notificator from "./Notificator.tsx";
 import UploadTest from "../test/UploadTest.tsx";
 
@@ -60,7 +56,7 @@ function AddFileBtn() {
       });
 
       const re = new RegExp(/([\\/])/, "g");
-      let uploadFile: uploadFileType | null = null;
+      let uploadFile: fileType | null = null;
       if (selected) {
         if (typeof selected == "string") {
           const dirs = selected.split(re);
@@ -77,11 +73,11 @@ function AddFileBtn() {
 
       dispatch(addFile(uploadFile));
       startInterval(currentId.current, 10, 1000);
+      currentId.current = currentId.current + 1;
       invoke("upload_handler", { uploadFilePath: uploadFile.path })
         .then((res) => {
           console.log(res);
           // dispatch(addProgress({ id: currentId.current, progress: 101 }));
-          currentId.current = currentId.current + 1;
           // await store.set(uploadFile?.path, { results: res });
           // await store.save();
         })

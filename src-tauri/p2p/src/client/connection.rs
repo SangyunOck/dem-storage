@@ -15,7 +15,7 @@ pub struct ClientEndpoint {
 impl ClientEndpoint {
     pub async fn new() -> Result<Self, Error> {
         let provider = Arc::new(rustls::crypto::ring::default_provider());
-        let mut endpoint = Endpoint::client("127.0.0.1:0".parse().unwrap())
+        let mut endpoint = Endpoint::client("0.0.0.0:0".parse().unwrap())
             .map_err(|e| Error::Configuration(format!("client configuration error: {e}")))?;
 
         endpoint.set_default_client_config(ClientConfig::new(Arc::new(

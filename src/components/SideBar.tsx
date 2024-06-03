@@ -1,10 +1,12 @@
-import { useNavigate } from "react-router-dom";
-import { Box, Divider, Stack, Typography } from "@mui/material";
+import { Link, useLocation } from "react-router-dom";
+import { Box, Divider, Stack, Typography, useTheme } from "@mui/material";
 import {
   Folder,
+  FolderOutlined,
   KeyboardDoubleArrowLeft,
   KeyboardDoubleArrowRight,
   Settings,
+  SettingsOutlined,
 } from "@mui/icons-material";
 
 import UserInfoBox from "./UserInfoBox.tsx";
@@ -17,7 +19,8 @@ interface Props {
 
 function SideBar(props: Props) {
   const { isCompact, toggleIsCompact } = props;
-  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const theme = useTheme();
 
   return (
     <Stack spacing={1} sx={{ width: "100%" }}>
@@ -30,39 +33,56 @@ function SideBar(props: Props) {
       >
         <div>
           <CustomButtonBase onClick={toggleIsCompact}>
-            {isCompact ? (
-              <KeyboardDoubleArrowRight />
-            ) : (
-              <KeyboardDoubleArrowLeft />
-            )}
+            <Box>
+              {isCompact ? (
+                <KeyboardDoubleArrowRight />
+              ) : (
+                <KeyboardDoubleArrowLeft />
+              )}
+            </Box>
           </CustomButtonBase>
         </div>
       </Box>
       {!isCompact && <UserInfoBox />}
       <Divider />
-      <CustomButtonBase onClick={() => navigate("/")}>
-        <div
+      <CustomButtonBase
+        sx={{
+          bgcolor: pathname == "/" ? theme.palette.action.selected : undefined,
+        }}
+      >
+        <Link
+          to={"/"}
           style={{
             width: "100%",
             display: "grid",
             gridTemplateColumns: "24px 1fr",
+            color: "inherit",
+            textDecoration: "none",
           }}
         >
-          <Folder />
+          {pathname == "/" ? <Folder /> : <FolderOutlined />}
           {!isCompact && <Typography>내 파일</Typography>}
-        </div>
+        </Link>
       </CustomButtonBase>
-      <CustomButtonBase onClick={() => navigate("/settings")}>
-        <div
+      <CustomButtonBase
+        sx={{
+          bgcolor:
+            pathname == "/settings" ? theme.palette.action.selected : undefined,
+        }}
+      >
+        <Link
+          to={"/settings"}
           style={{
             width: "100%",
             display: "grid",
             gridTemplateColumns: "24px 1fr",
+            color: "inherit",
+            textDecoration: "none",
           }}
         >
-          <Settings />
+          {pathname == "/settings" ? <Settings /> : <SettingsOutlined />}
           {!isCompact && <Typography>설정</Typography>}
-        </div>
+        </Link>
       </CustomButtonBase>
     </Stack>
   );

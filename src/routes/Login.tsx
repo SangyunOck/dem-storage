@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { Form, Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { Store } from "tauri-plugin-store-api";
 import {
   Box,
@@ -20,7 +21,6 @@ import {
 } from "@mui/material";
 
 import { serverFetcher } from "../fetchers.ts";
-import { useDispatch } from "react-redux";
 import { login } from "../redux/slices/userSlice.ts";
 import AutoLoginSwitch from "../components/AutoLoginSwitch.tsx";
 import Notificator from "../components/Notificator.tsx";
@@ -69,7 +69,7 @@ function Login() {
         .then(() => {
           store.set("user", logInput).then();
           dispatch(login(logInput));
-          navigate("/");
+          navigate("/", { replace: true });
         })
         .catch(() => {
           setIsError(true);
@@ -89,7 +89,7 @@ function Login() {
                 .post("/member/login", val)
                 .then(() => {
                   dispatch(login(val));
-                  navigate("/");
+                  navigate("/", { replace: true });
                 })
                 .catch(() => {
                   setOpenAlarm(true);

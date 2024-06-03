@@ -9,22 +9,24 @@ type sortType = {
 type defaultType = {
   value: {
     sortTypes: sortType[];
+    searchInput: string;
   };
 };
 const initState: defaultType = {
   value: {
     sortTypes: [
       {
-        asc: false,
+        asc: true,
         isActive: true,
-        name: "최신순",
+        name: "진행순",
       },
       {
-        asc: false,
+        asc: true,
         isActive: false,
         name: "파일명순",
       },
     ],
+    searchInput: "",
   },
 };
 
@@ -45,8 +47,11 @@ const fileListOptionSlice = createSlice({
         }
       });
     },
+    changeInput: (state, action: PayloadAction<string>) => {
+      state.value.searchInput = action.payload;
+    },
   },
 });
 
-export const { changeSortType } = fileListOptionSlice.actions;
+export const { changeSortType, changeInput } = fileListOptionSlice.actions;
 export default fileListOptionSlice.reducer;
