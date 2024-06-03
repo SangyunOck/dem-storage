@@ -1,12 +1,22 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use once_cell::sync::Lazy;
 use p2p::scheduler::get_scheduled_chunks;
 use p2p::types::Node;
-use std::path::PathBuf;
-use std::sync::Arc;
+use std::collections::BTreeMap;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use tauri::State;
 use tokio::sync::mpsc::unbounded_channel;
+
+static UPLOADS: Lazy<Mutex<BTreeMap<String, (u8, u64)>>> =
+    Lazy::new(|| Mutex::new(BTreeMap::new()));
+
+fn get_file_name(path: &str) -> String {
+    let path = Path::new(path);
+    path.file_name().unwrap().to_str().unwrap().to_string()
+}
 
 #[tauri::command]
 async fn upload_handler<'a>(
@@ -24,6 +34,12 @@ async fn upload_handler<'a>(
         .await
         .unwrap()
     {
+        let file_name = get_file_name(&sc.chunk.file_path);
+        UPLOADS
+            .lock()
+            .unwrap()
+            .insert(file_name, (sc.chunk.index, sc.chunk.offset));
+
         let handle = node
             .upload_file(
                 p2p::types::UploadFileRequest {
@@ -39,6 +55,7 @@ async fn upload_handler<'a>(
             )
             .await
             .unwrap();
+
         upload_handles.push(handle);
     }
 
@@ -65,14 +82,20 @@ async fn download_handler<'a>(
         .await
         .unwrap()
     {
+        let (index, offset) = UPLOADS
+            .lock()
+            .unwrap()
+            .get(&download_file_name)
+            .cloned()
+            .unwrap_or((0, 0));
         let handle = node
             .download_file(
                 p2p::types::DownloadFileRequest {
                     node_id: node.get_node_id(),
                     password: "password".to_string(),
                     file_name: download_file_name.clone(),
-                    index: sc.chunk.index,
-                    offset: sc.chunk.offset,
+                    index,
+                    offset,
                 },
                 sc.node.endpoint.clone(),
                 sc.node.peer_id.clone(),
@@ -106,7 +129,7 @@ async fn main() -> eyre::Result<()> {
         PathBuf::from(client_base_path),
     ));
     let (server_err_tx, _server_err_rx) = unbounded_channel();
-    let node_handle = node.spin_up(port, server_err_tx).await.unwrap();
+    drop(node.spin_up(port, server_err_tx));
 
     tauri::Builder::default()
         .manage(node.clone())

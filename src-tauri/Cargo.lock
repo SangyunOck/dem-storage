@@ -785,6 +785,7 @@ version = "0.0.0"
 dependencies = [
  "async-channel",
  "eyre",
+ "once_cell",
  "p2p",
  "serde",
  "serde_json",
