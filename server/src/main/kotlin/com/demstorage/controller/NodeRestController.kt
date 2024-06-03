@@ -37,10 +37,9 @@ class NodeRestController(
     @GetMapping("/available-nodes")
     fun getAvailableNodes(): AvailableNodeResponse {
         logger.info { "get available nodes" }
-        // Todo Node 정상 연결된 후 교체 (STATIC_NODES -> nodes)
         val nodes = availableNodeLoader.load(DEFAULT_NODE_LIMIT)
         return AvailableNodeResponse(
-            nodes = STATIC_NODES.map {
+            nodes = nodes.map {
                 AvailableNode(
                     peerId = it.peerId.value,
                     ipAddress = it.ipAddress.value,
