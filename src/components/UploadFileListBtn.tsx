@@ -1,4 +1,5 @@
-import { useCallback, useState, MouseEvent } from "react";
+import { useCallback, useState, MouseEvent, useMemo } from "react";
+
 import {
   Badge,
   Box,
@@ -15,33 +16,69 @@ import { useAppSelector } from "../redux/store.ts";
 import { CustomButtonBase, ScrollBox } from "./styles.tsx";
 import UploadFileListItem from "./UploadFileListItem.tsx";
 
-function EmptyAlarms() {
+function ButtonIcon() {
+  const files = useAppSelector((state) => state.upload.value.files);
+
+  const unCompletedFiles = files.filter((f) => !f.isCompleted);
+  const unCheckedFiles = files.filter((f) => !f.isChecked);
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexGrow: 1,
-        height: "100%",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Typography variant={"overline"}>업로드 중인 파일이 없습니다.</Typography>
+    <Box>
+      <Badge
+        badgeContent={unCheckedFiles.length}
+        color={"info"}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      >
+        <Upload />
+      </Badge>
+      <CircularProgress
+        variant={"determinate"}
+        value={
+          unCompletedFiles.length > 0
+            ? unCompletedFiles.reduce((a, f) => a + f.progress, 0) /
+              unCompletedFiles.length
+            : 0
+        }
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          zIndex: 1,
+        }}
+      />
     </Box>
   );
 }
 
 function UploadFileListBtn() {
   const theme = useTheme();
-  const files = useAppSelector((state) => state.upload.value);
+  const len = useAppSelector((state) => state.upload.value.len);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const unCompletedFiles = files.filter((f) => !f.isCompleted);
 
   const onClickAlarm = useCallback((e: MouseEvent<HTMLElement>) => {
     setAnchorEl(() => {
       return e.currentTarget;
     });
   }, []);
+
+  const EmptyAlarms = useMemo(() => {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexGrow: 1,
+          height: "100%",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Typography variant={"overline"}>
+          업로드 중인 파일이 없습니다.
+        </Typography>
+      </Box>
+    );
+  }, []);
+
   return (
     <>
       <CustomButtonBase
@@ -51,32 +88,7 @@ function UploadFileListBtn() {
           borderRadius: "50%",
         }}
       >
-        <Box>
-          <Badge
-            variant={"dot"}
-            invisible={
-              files.findIndex((v) => !v.isChecked && v.isCompleted) < 0
-            }
-            color={"info"}
-          >
-            <Upload />
-          </Badge>
-          <CircularProgress
-            variant={"determinate"}
-            value={
-              unCompletedFiles.length > 0
-                ? unCompletedFiles.reduce((a, f) => a + f.progress, 0) /
-                  unCompletedFiles.length
-                : 0
-            }
-            sx={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              zIndex: 1,
-            }}
-          />
-        </Box>
+        <ButtonIcon />
       </CustomButtonBase>
       <Popover
         open={!!anchorEl}
@@ -93,15 +105,12 @@ function UploadFileListBtn() {
       >
         <Box sx={{ width: theme.spacing(50), height: theme.spacing(30) }}>
           <ScrollBox>
-            {files.length == 0 ? (
-              <EmptyAlarms />
+            {len == 0 ? (
+              EmptyAlarms
             ) : (
               <List disablePadding>
-                {[...files].reverse().map((f) => (
-                  <UploadFileListItem
-                    key={_.uniqueId(f.file.name)}
-                    uploadFile={f}
-                  />
+                {_.range(len - 1, -1).map((n) => (
+                  <UploadFileListItem key={_.uniqueId(`{n}`)} idx={n} />
                 ))}
               </List>
             )}

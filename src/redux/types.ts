@@ -1,5 +1,5 @@
 export type setFileProgress = {
-  id: number;
+  file: fileType;
   progress: number;
 };
 
@@ -10,7 +10,6 @@ export type fileType = {
 
 export type uploadFileSliceType = {
   file: fileType;
-  id: number;
   startAt: Date;
   isCompleted: boolean;
   progress: number;

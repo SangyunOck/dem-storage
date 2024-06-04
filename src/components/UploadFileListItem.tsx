@@ -3,26 +3,28 @@ import { Box, ListItem, ListItemText, Typography } from "@mui/material";
 import { CheckCircle } from "@mui/icons-material";
 import dayjs from "dayjs";
 
-import { uploadFileSliceType } from "../redux/types.ts";
 import { ListItemBase } from "./styles.tsx";
 import FileFormatIcon from "./FileFormatIcon.tsx";
 import FileTransferProgressBar from "./FileTransferProgressBar.tsx";
 import { useDispatch } from "react-redux";
 import { checkOne } from "../redux/slices/uploadSlice.ts";
+import { useAppSelector } from "../redux/store.ts";
 
 interface Props {
-  uploadFile: uploadFileSliceType;
+  idx: number;
 }
 
 const setTimeStamp = (dateTime: Date) => dayjs(dateTime).locale("ko").fromNow();
 
 function UploadFileListItem(props: Props) {
-  const { id, file, startAt, progress, isCompleted, isChecked } =
-    props.uploadFile;
   const dispatch = useDispatch();
+  const { idx } = props;
+  const { file, progress, startAt, isChecked, isCompleted } = useAppSelector(
+    (state) => state.upload.value.files[idx],
+  );
   const timeStamp = useRef(setTimeStamp(startAt));
 
-  const check = useCallback(() => dispatch(checkOne(id)), []);
+  const check = useCallback(() => dispatch(checkOne(idx)), []);
 
   useEffect(() => {
     timeStamp.current = setTimeStamp(startAt);

@@ -1,13 +1,9 @@
 import { useRef } from "react";
 import { useDispatch } from "react-redux";
 
-import { addProgress } from "../redux/slices/uploadSlice.ts";
+import { addProgressWithIdx } from "../redux/slices/uploadSlice.ts";
 
-const UploadTest = (): [
-  (id: number, progress: number, interval: number) => void,
-  (id: number) => void,
-  () => void,
-] => {
+const UploadTest = () => {
   const dispatch = useDispatch();
   const ids = useRef<number[]>([]);
   const timeouts = useRef<NodeJS.Timeout[]>([]);
@@ -15,7 +11,7 @@ const UploadTest = (): [
   const startInterval = (id: number, progress: number, interval: number) => {
     timeouts.current.push(
       setInterval(() => {
-        dispatch(addProgress({ id: id, progress: progress }));
+        dispatch(addProgressWithIdx({ idx: id, progress: progress }));
       }, interval),
     );
     ids.current.push(id);
