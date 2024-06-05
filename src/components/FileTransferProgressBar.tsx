@@ -1,9 +1,6 @@
-import {
-  Box,
-  LinearProgress,
-  LinearProgressProps,
-  Typography,
-} from "@mui/material";
+import { Box, LinearProgressProps, Typography } from "@mui/material";
+
+import { BorderLinearProgress } from "./styles.tsx";
 
 interface Props extends LinearProgressProps {
   fontSize?: string;
@@ -14,7 +11,7 @@ function FileTransferProgressBar(props: Props) {
   return (
     <Box sx={{ display: "flex", alignItems: "center" }}>
       <Box sx={{ width: "100%", mr: 1 }}>
-        <LinearProgress variant={"determinate"} {...props} />
+        <BorderLinearProgress variant={"determinate"} {...props} />
       </Box>
       <Box>
         <Typography

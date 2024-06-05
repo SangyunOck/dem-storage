@@ -1,4 +1,4 @@
-export type setFileProgress = {
+export type FileProgressType = {
   file: fileType;
   progress: number;
 };

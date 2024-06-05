@@ -9,17 +9,11 @@ import {
 } from "@mui/icons-material";
 
 import { useAppSelector } from "../redux/store.ts";
-import {
-  changeInput,
-  changeSortType,
-} from "../redux/slices/fileListOptionSlice.ts";
+import { changeInput, changeSortType } from "../redux/slices/downloadSlice.ts";
 import { ScrollBox } from "./styles.tsx";
 
-function ListOptionsBox() {
+function SearchInput() {
   const dispatch = useDispatch();
-  const sortTypes = useAppSelector(
-    (state) => state.listOptions.value.sortTypes,
-  );
   const [input, setInput] = useState("");
 
   const debouncedChangeSearchInput = _.debounce((s: string) => {
@@ -32,8 +26,29 @@ function ListOptionsBox() {
   }, []);
 
   return (
+    <TextField
+      fullWidth
+      variant={"standard"}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position={"start"}>
+            <Search />
+          </InputAdornment>
+        ),
+      }}
+      value={input}
+      onChange={onChangeInput}
+    />
+  );
+}
+
+function ListOptionsBox() {
+  const dispatch = useDispatch();
+  const sortTypes = useAppSelector((state) => state.download.value.sortTypes);
+
+  return (
     <Grid container>
-      <Grid item xs={8}>
+      <Grid item xs={9}>
         <ScrollBox>
           <Stack direction={"row"} spacing={1}>
             {_.map(sortTypes, (v) => {
@@ -50,19 +65,8 @@ function ListOptionsBox() {
           </Stack>
         </ScrollBox>
       </Grid>
-      <Grid item xs={4}>
-        <TextField
-          variant={"standard"}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position={"start"}>
-                <Search />
-              </InputAdornment>
-            ),
-          }}
-          value={input}
-          onChange={onChangeInput}
-        />
+      <Grid item xs={3}>
+        <SearchInput />
       </Grid>
     </Grid>
   );

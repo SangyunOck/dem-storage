@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { setFileProgress, uploadFileSliceType, fileType } from "../types.ts";
+import { FileProgressType, uploadFileSliceType, fileType } from "../types.ts";
 
 type defaultType = {
   value: {
@@ -30,7 +30,7 @@ const uploadSlice = createSlice({
       });
       state.value.len += 1;
     },
-    setProgress: (state, action: PayloadAction<setFileProgress>) => {
+    setProgress: (state, action: PayloadAction<FileProgressType>) => {
       const { file, progress } = action.payload;
       const targetIdx = state.value.files.findIndex(
         (f) => f.file.path == file.path && f.file.name == file.name,
@@ -42,7 +42,7 @@ const uploadSlice = createSlice({
         state.value.files[targetIdx].isCompleted = true;
       }
     },
-    addProgress: (state, action: PayloadAction<setFileProgress>) => {
+    addProgress: (state, action: PayloadAction<FileProgressType>) => {
       const { file, progress } = action.payload;
       const targetIdx = state.value.files.findIndex(
         (f) => f.file.path == file.path && f.file.name == file.name,
