@@ -54,6 +54,7 @@ const downloadSlice = createSlice({
           isInProgress: false,
           progress: 0,
         },
+        ...state.value.files,
       ];
       state.value.len += 1;
     },
