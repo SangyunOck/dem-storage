@@ -36,7 +36,7 @@ async fn upload_handler<'a>(
     // let peers = get_available_nodes(router_server_url).await.unwrap();
 
     let peers = vec![Node {
-        endpoint: "192.168.238.241:8080".to_string(),
+        endpoint: "127.0.0.1:8080".to_string(),
         peer_id: "node_1".to_string(),
     }];
 
@@ -95,7 +95,7 @@ async fn download_handler<'a>(
     // let peers = get_available_nodes(router_server_url).await.unwrap();
 
     let peers = vec![Node {
-        endpoint: "192.168.238.241:8080".to_string(),
+        endpoint: "127.0.0.1:8080".to_string(),
         peer_id: "node_1".to_string(),
     }];
 
@@ -162,7 +162,7 @@ async fn main() -> eyre::Result<()> {
     let port = std::env::var("PORT")
         .unwrap_or_default()
         .parse()
-        .unwrap_or(8080);
+        .unwrap_or(9090);
 
     let server_base_path =
         std::env::var("SERVER_BASE_PATH").unwrap_or("./server-storage".to_string());

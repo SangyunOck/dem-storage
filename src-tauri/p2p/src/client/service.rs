@@ -1,4 +1,4 @@
-use crate::consts::{DEFAULT_FILE_READ_SIZE, DEFAULT_STREAM_READ_BUF_SIZE};
+use crate::consts::{DEFAULT_FILE_READ_SIZE, DEFAULT_PROTOCOL_BUF_SIZE, DEFAULT_STREAM_READ_BUF_SIZE};
 use crate::error::Error;
 use crate::types::{
     get_init_header_from_stream, DownloadFileRequest, Header, ProtocolDownloadMetadata,
@@ -87,7 +87,7 @@ async fn read_file_and_write_to_stream(
         // TODO: read only for len
         // TODO: CAUTION - consider length after encryption
         println!("sending {}", encrypted.len());
-        tx.write(&encrypted).await?;
+        tx.write_all(&encrypted).await?;
         buffer.clear();
 
         if len < n {
@@ -99,21 +99,7 @@ async fn read_file_and_write_to_stream(
     }
 
     buffer.clear();
-
-    let mut count = 0;
-    loop {
-        let _ = rx.read_buf(&mut buffer);
-        println!("{:?}", buffer);
-        if let Ok(Header::OperationDone(_)) = bincode::deserialize::<Header>(&buffer) {
-            return Ok(());
-        }
-        buffer.clear();
-        tokio::time::sleep(Duration::from_secs(1)).await;
-        count += 1;
-        if count == 5 {
-            return Err(Error::Internal("cannot complete job".to_string()));
-        }
-    }
+    Ok(())
 }
 
 pub async fn download_file(
@@ -187,7 +173,7 @@ async fn read_from_stream_and_write_file(
         .seek(SeekFrom::Start(protocol_download_metadata.offset))
         .await?;
 
-    let mut buffer = Vec::with_capacity(DEFAULT_STREAM_READ_BUF_SIZE);
+    let mut buffer = Vec::with_capacity(DEFAULT_FILE_READ_SIZE + crypto::AES_256_TAG_SIZE);
 
     while let Ok(n) = rx.read_buf(&mut buffer).await {
         println!("[client] read: {n}");
@@ -224,7 +210,7 @@ async fn read_from_stream_and_write_file(
             }
         }
     }
-    tokio::fs::remove_file(&encrypted_path).await?;
+    // tokio::fs::remove_file(&encrypted_path).await?;
 
     Ok(())
 }

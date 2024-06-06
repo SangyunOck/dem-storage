@@ -1,9 +1,10 @@
 use crate::consts::{DEFAULT_FILE_READ_SIZE, DEFAULT_STREAM_READ_BUF_SIZE};
 use crate::error::Error;
-use crate::types::{Header, ProtocolDownloadMetadata, ProtocolUploadHeader, ProtocolUploadReady};
+use crate::types::{Header, ProtocolDownloadMetadata, ProtocolOperationDone, ProtocolUploadHeader, ProtocolUploadReady};
 
 use quinn::{RecvStream, SendStream};
 use std::path::Path;
+use std::time::Duration;
 use tokio::fs::{File, OpenOptions};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
@@ -16,7 +17,7 @@ pub async fn handshake(
         Header::UploadRequestHeader(..) => {
             let upload_ready_ser =
                 bincode::serialize(&Header::UploadReady(ProtocolUploadReady)).unwrap();
-            tx.write(&upload_ready_ser).await?;
+            tx.write_all(&upload_ready_ser).await?;
         }
         Header::DownloadRequestHeader(download_request_header) => {
             let len = match file {
@@ -32,7 +33,7 @@ pub async fn handshake(
                 offset: download_request_header.offset,
             });
             let metadata_ser = bincode::serialize(&metadata).unwrap();
-            tx.write(&metadata_ser).await?;
+            tx.write_all(&metadata_ser).await?;
         }
         _ => (),
     }
@@ -42,23 +43,29 @@ pub async fn handshake(
 
 pub async fn handle_upload_file(
     mut rx: RecvStream,
+    mut tx: SendStream,
     file: Option<File>,
     _protocol_upload_header: ProtocolUploadHeader,
 ) -> Result<(), Error> {
     println!("[server] handling upload file");
-    let mut file = file.ok_or(Error::File("invalid file: cannot write".to_string()))?;
     let mut read = 0;
+    let mut file = file.ok_or(Error::File("invalid file: cannot write".to_string()))?;
     let mut buffer = Vec::with_capacity(DEFAULT_STREAM_READ_BUF_SIZE);
 
     while let Ok(n) = rx.read_buf(&mut buffer).await {
         read += n;
-        if n == 0 {
-            return Err(Error::Connection("[server] broken pipe".to_string()));
-        }
         println!("[server] read: {}", read);
-        file.write(&buffer[..n]).await?;
+        if n == 0 {
+            break;
+        }
+        file.write_all(&buffer[..n]).await?;
+        file.flush().await?;
         buffer.clear();
     }
+
+    println!("writing protocol operation done");
+    tx.write_all(&bincode::serialize(&Header::OperationDone(ProtocolOperationDone)).unwrap()).await?;
+    println!("[server] upload done");
 
     Ok(())
 }
@@ -66,16 +73,18 @@ pub async fn handle_upload_file(
 pub async fn handle_download_file(mut tx: SendStream, file: Option<File>) -> Result<(), Error> {
     println!("[server] handling download file");
     let mut file = file.ok_or(Error::File("invalid file: cannot read".to_string()))?;
-    let mut buffer = Vec::with_capacity(DEFAULT_FILE_READ_SIZE + crypto::AES_256_TAG_SIZE);
+    let mut buffer = Vec::with_capacity(DEFAULT_FILE_READ_SIZE);
 
     while let Ok(n) = file.read_buf(&mut buffer).await {
         if n == 0 {
             return Ok(());
         }
-        tx.write(&buffer[..n]).await?;
+        tx.write_all(&buffer[..n]).await?;
         println!("[server] write: {}", n);
         buffer.clear();
     }
+
+    tokio::time::sleep(Duration::from_secs(1)).await;
 
     Ok(())
 }
