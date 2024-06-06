@@ -8,6 +8,10 @@ export type fileType = {
   name: string;
 };
 
+export type UploadResultType = {
+  file_name: string;
+};
+
 export type uploadFileSliceType = {
   file: fileType;
   startAt: Date;
