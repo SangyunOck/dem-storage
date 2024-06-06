@@ -18,7 +18,8 @@ export const EventListeners = () => {
 
   const updateUploadResult = _.debounce((fileName: string) => {
     dispatch(addFile(fileName));
-  }, 500);
+    console.log(fileName);
+  }, 3000);
 
   const startListeners = async () => {
     downloadProgressListener.current = await listen<FileProgressType>(
@@ -36,6 +37,7 @@ export const EventListeners = () => {
     uploadedFileListener.current = await listen<uploadEventPayload>(
       "upload-result",
       (e) => {
+        console.log(e);
         updateUploadResult(e.payload.file_name);
       },
     );

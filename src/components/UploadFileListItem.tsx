@@ -7,7 +7,7 @@ import { ListItemBase } from "./styles.tsx";
 import FileFormatIcon from "./FileFormatIcon.tsx";
 import FileTransferProgressBar from "./FileTransferProgressBar.tsx";
 import { useDispatch } from "react-redux";
-import { checkOne } from "../redux/slices/uploadSlice.ts";
+import { checkOne, setProgress } from "../redux/slices/uploadSlice.ts";
 import { useAppSelector } from "../redux/store.ts";
 
 interface Props {
@@ -23,10 +23,24 @@ function UploadFileListItem(props: Props) {
     (state) => state.upload.value.files[idx],
   );
   const timeStamp = useRef(setTimeStamp(startAt));
+  const interval = useRef<number | null>(null);
+  const totalVal = useRef(5000);
 
   const check = useCallback(() => dispatch(checkOne(idx)), []);
 
   useEffect(() => {
+    if (!isCompleted) {
+      let currentVal = 0;
+      interval.current = setInterval(() => {
+        currentVal += 1000;
+        dispatch(
+          setProgress({
+            file: file,
+            progress: Math.floor((currentVal / totalVal.current) * 100),
+          }),
+        );
+      }, 1000);
+    }
     timeStamp.current = setTimeStamp(startAt);
     return () => {};
   }, []);

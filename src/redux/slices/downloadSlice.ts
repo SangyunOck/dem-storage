@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { downloadFileSliceType, fileType, FileProgressType } from "../types.ts";
-import { downFiles } from "../../test/mocks.ts";
 
 type sortType = {
   asc: boolean;
@@ -21,8 +20,8 @@ type defaultType = {
 
 const initState: defaultType = {
   value: {
-    files: downFiles,
-    len: downFiles.length,
+    files: [],
+    len: 0,
     sortMethod: (a, b) => a.progress - b.progress,
     sortTypes: [
       {
@@ -45,16 +44,17 @@ const downloadSlice = createSlice({
   initialState: initState,
   reducers: {
     addFile: (state, action: PayloadAction<string>) => {
-      state.value.files = [...state.value.files];
-      state.value.files.push({
-        file: {
-          path: "123",
-          name: action.payload,
+      state.value.files = [
+        {
+          file: {
+            path: "123",
+            name: action.payload,
+          },
+          isCompleted: false,
+          isInProgress: false,
+          progress: 0,
         },
-        isCompleted: false,
-        isInProgress: false,
-        progress: 0,
-      });
+      ];
       state.value.len += 1;
     },
     addFiles: (state, action: PayloadAction<fileType[]>) => {
@@ -107,7 +107,14 @@ const downloadSlice = createSlice({
       );
       if (idx < 0) return;
 
-      state.value.files[idx].progress = progress;
+      const targetFiles = state.value.files[idx];
+      if (targetFiles.progress >= 100) {
+        targetFiles.isInProgress = false;
+        targetFiles.isCompleted = true;
+      } else {
+        targetFiles.progress = progress;
+        targetFiles.isInProgress = true;
+      }
     },
     changeInput: (state, action: PayloadAction<string>) => {
       state.value.searchInput = action.payload;

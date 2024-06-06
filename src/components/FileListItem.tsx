@@ -11,7 +11,7 @@ import { CheckCircle, Delete, Download } from "@mui/icons-material";
 import { motion, useIsPresent } from "framer-motion";
 import { invoke } from "@tauri-apps/api/tauri";
 
-import { deleteFile } from "../redux/slices/downloadSlice.ts";
+import { deleteFile, setProgress } from "../redux/slices/downloadSlice.ts";
 import { downloadFileSliceType } from "../redux/types.ts";
 import { ListItemBase, ListItemFunctionButtonBase } from "./styles.tsx";
 import FileFormatIcon from "./FileFormatIcon.tsx";
@@ -70,10 +70,24 @@ function FileListItem({ fileItem, listIdx }: Props) {
   };
 
   const handleDownload = useCallback(() => {
+    let currentVal = 0;
+    const totalVal = 4000;
+    const interval = setInterval(() => {
+      currentVal += 1000;
+      dispatch(
+        setProgress({
+          file: file,
+          progress: Math.floor((currentVal / totalVal) * 100),
+        }),
+      );
+    }, 1000);
     invoke("download_handler", {
       downloadFileName: file.name,
     })
-      .then((res) => console.log(res))
+      .then((res) => {
+        clearInterval(interval);
+        console.log(res);
+      })
       .catch((err) => console.error(err));
   }, []);
 
