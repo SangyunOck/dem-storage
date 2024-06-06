@@ -32,23 +32,23 @@ function AddFileBtn() {
     async (e: MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
 
-      const nodes = await serverFetcher
-        .get("/node/available-nodes")
-        .then((res) => {
-          return _.map(
-            res.data.nodes,
-            (v): NodeType => ({ peer_id: v.peerId, endpoint: v.ipAddress }),
-          );
-        })
-        .catch((err) => {
-          console.error(err);
-          return null;
-        });
-
-      if (!nodes) {
-        setOpenAlarm(true);
-        return;
-      }
+      // const nodes = await serverFetcher
+      //   .get("/node/available-nodes")
+      //   .then((res) => {
+      //     return _.map(
+      //       res.data.nodes,
+      //       (v): NodeType => ({ peer_id: v.peerId, endpoint: v.ipAddress }),
+      //     );
+      //   })
+      //   .catch((err) => {
+      //     console.error(err);
+      //     return null;
+      //   });
+      //
+      // if (!nodes) {
+      //   setOpenAlarm(true);
+      //   return;
+      // }
 
       const selected = await open({
         directory: false,

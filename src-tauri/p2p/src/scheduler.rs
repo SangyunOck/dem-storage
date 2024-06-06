@@ -61,6 +61,17 @@ pub async fn get_scheduled_chunks(
     Ok(scheduled_chunk)
 }
 
+pub async fn get_node_combinations(
+    nodes: Vec<Node>,
+) -> Vec<Node> {
+    let node_len = nodes.len();
+    nodes
+        .into_iter()
+        .combinations(2.min(node_len))
+        .flatten()
+        .collect_vec()
+}
+
 #[cfg(test)]
 mod test {
     use crate::scheduler::get_scheduled_chunks;
