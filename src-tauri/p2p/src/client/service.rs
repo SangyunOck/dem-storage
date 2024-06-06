@@ -173,15 +173,18 @@ async fn read_from_stream_and_write_file(
         .seek(SeekFrom::Start(protocol_download_metadata.offset))
         .await?;
 
-    let mut buffer = Vec::with_capacity(DEFAULT_FILE_READ_SIZE + crypto::AES_256_TAG_SIZE);
+    let mut buffer = Vec::with_capacity(DEFAULT_STREAM_READ_BUF_SIZE);
 
+    let mut read = 0;
     while let Ok(n) = rx.read_buf(&mut buffer).await {
-        println!("[client] read: {n}");
+        read += n;
+        println!("[client] read: {read}");
         if n == 0 {
             println!("[client] download done");
             break;
         }
-        let _ = encrypted_file.write(&buffer).await?;
+        let _ = encrypted_file.write_all(&buffer[..n]).await?;
+        encrypted_file.flush().await?;
         buffer.clear();
     }
 
@@ -199,7 +202,8 @@ async fn read_from_stream_and_write_file(
         }
         match decrypt_aes_256(password.as_bytes().to_vec(), buffer[..n].to_vec(), nonce).await {
             Ok(plain) => {
-                let _ = plain_file.write(&plain).await?;
+                let _ = plain_file.write_all(&plain).await?;
+                plain_file.flush().await?;
                 nonce += 1;
                 println!("[client] decrypting: {n}");
                 buffer.clear();
@@ -210,7 +214,7 @@ async fn read_from_stream_and_write_file(
             }
         }
     }
-    tokio::fs::remove_file(&encrypted_path).await?;
+    // tokio::fs::remove_file(&encrypted_path).await?;
 
     Ok(())
 }

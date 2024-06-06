@@ -73,7 +73,7 @@ pub async fn handle_upload_file(
 pub async fn handle_download_file(mut tx: SendStream, file: Option<File>) -> Result<(), Error> {
     println!("[server] handling download file");
     let mut file = file.ok_or(Error::File("invalid file: cannot read".to_string()))?;
-    let mut buffer = Vec::with_capacity(DEFAULT_FILE_READ_SIZE);
+    let mut buffer = Vec::with_capacity(DEFAULT_STREAM_READ_BUF_SIZE);
 
     while let Ok(n) = file.read_buf(&mut buffer).await {
         if n == 0 {
