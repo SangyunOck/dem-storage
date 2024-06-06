@@ -109,3 +109,12 @@ impl From<AvailableNodes> for Node {
         }
     }
 }
+
+impl From<proto::main_server_operations::list_available_nodes_response::Node> for Node {
+    fn from(value: proto::main_server_operations::list_available_nodes_response::Node) -> Self {
+        Self {
+            endpoint: value.node_ip,
+            peer_id: value.peer_id
+        }
+    }
+}

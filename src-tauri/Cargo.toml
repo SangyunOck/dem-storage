@@ -36,6 +36,7 @@ tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", 
 thiserror = "1.0.61"
 tokio = { workspace = true }
 tonic = "0.10.2"
+local-ip-address = "0.6.1"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

@@ -3,7 +3,8 @@ resolver = "2"
 members = [
     "crypto",
     "node",
-    "p2p"
+    "p2p",
+    "proto"
 ]
 
 [workspace.dependencies]

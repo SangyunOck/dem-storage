@@ -7,3 +7,7 @@ edition = "2021"
 eyre = "0.6.12"
 p2p = { path = "../p2p" }
 tokio = { workspace = true }
+prost = "0.12.6"
+tonic = "0.10.2"
+prost-types = "0.12.6"
+proto = { path = "../proto" }
