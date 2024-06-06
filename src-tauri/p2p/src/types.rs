@@ -89,3 +89,19 @@ pub struct ScheduledChunk {
     pub node: Node,
     pub chunk: Chunk,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct AvailableNodes {
+    pub peer_id: String,
+    pub ip_address: String,
+}
+
+impl From<AvailableNodes> for Node {
+    fn from(value: AvailableNodes) -> Self {
+        Self {
+            peer_id: value.peer_id,
+            endpoint: value.ip_address
+        }
+    }
+}

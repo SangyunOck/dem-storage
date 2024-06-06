@@ -1,6 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod prepare;
+
 use once_cell::sync::Lazy;
 use p2p::scheduler::get_scheduled_chunks;
 use p2p::types::Node;
@@ -9,6 +11,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tauri::State;
 use tokio::sync::mpsc::unbounded_channel;
+use crate::prepare::get_available_nodes;
 
 static UPLOADS: Lazy<Mutex<BTreeMap<String, (u8, u64)>>> =
     Lazy::new(|| Mutex::new(BTreeMap::new()));
@@ -23,14 +26,11 @@ async fn upload_handler<'a>(
     node: State<'a, Arc<p2p::node::Node>>,
     upload_file_path: String,
 ) -> Result<(), ()> {
-    // TODO: request nodes from main server
-    let nodes = vec![Node {
-        endpoint: "127.0.0.1:8080".to_string(),
-        peer_id: "node_1".to_string(),
-    }];
+    let router_server_url = std::env::var("ROUTER_SERVER")?;
+    let peers = get_available_nodes(router_server_url).await?;
 
     let mut upload_handles = vec![];
-    for sc in get_scheduled_chunks(&upload_file_path, nodes)
+    for sc in get_scheduled_chunks(&upload_file_path, peers)
         .await
         .unwrap()
     {
@@ -72,13 +72,11 @@ async fn download_handler<'a>(
     download_file_path: String,
     download_file_name: String,
 ) -> Result<(), ()> {
-    let nodes = vec![Node {
-        endpoint: "127.0.0.1:8080".to_string(),
-        peer_id: "node_1".to_string(),
-    }];
+    let router_server_url = std::env::var("ROUTER_SERVER")?;
+    let peers = get_available_nodes(router_server_url).await?;
 
     let mut download_handles = vec![];
-    for sc in get_scheduled_chunks(&download_file_path, nodes)
+    for sc in get_scheduled_chunks(&download_file_path, peers)
         .await
         .unwrap()
     {
@@ -122,6 +120,9 @@ async fn main() -> eyre::Result<()> {
         std::env::var("SERVER_BASE_PATH").unwrap_or("./server-storage".to_string());
     let client_base_path =
         std::env::var("CLIENT_BASE_PATH").unwrap_or("./client-storage".to_string());
+
+    // check router server env is given
+    std::env::var("ROUTER_SERVER").expect("router server env not found");
 
     let node = Arc::new(p2p::node::Node::new(
         "node".to_string(),
