@@ -20,7 +20,8 @@ async fn main() -> eyre::Result<()> {
         PathBuf::from(client_base_path),
     ));
     let (server_err_tx, _server_err_rx) = unbounded_channel();
-    drop(node.spin_up(port, server_err_tx));
+    let handle = node.spin_up(port, server_err_tx).await?;
+    handle.await?;
 
     Ok(())
 }
