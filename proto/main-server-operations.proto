@@ -5,6 +5,8 @@ option java_multiple_files = true; // 각각의 메시지 타입과 서비스 �
 
 service MainServerOperations {
   rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeResponse);
+
+  rpc ListAvailableNodes(ListAvailableNodesRequest) returns (ListAvailableNodesResponse);
 }
 
 message RegisterNodeRequest {
@@ -13,4 +15,18 @@ message RegisterNodeRequest {
 }
 
 message RegisterNodeResponse {
+}
+
+message ListAvailableNodesRequest {
+
+}
+
+message ListAvailableNodesResponse {
+
+  repeated Node nodes = 1;
+
+  message Node {
+    string node_ip = 1;
+    string peer_id = 2;
+  }
 }

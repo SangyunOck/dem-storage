@@ -1,6 +1,12 @@
+### 노드 등록
 GRPC localhost:9090/MainServerOperations/RegisterNode
 
 {
   "node_ip": "127.0.0.1",
   "peer_id": "12314"
 }
+
+### 사용 가능 노드 조회
+GRPC localhost:9090/MainServerOperations/ListAvailableNodes
+
+{}
