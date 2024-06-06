@@ -1,4 +1,4 @@
-use crate::consts::DEFAULT_INIT_BUF_SIZE;
+use crate::consts::DEFAULT_PROTOCOL_BUF_SIZE;
 use crate::error::Error;
 
 use quinn::RecvStream;
@@ -11,10 +11,11 @@ pub enum Header {
     UploadReady(ProtocolUploadReady),
     DownloadRequestHeader(ProtocolRequestDownloadHeader),
     DownloadMetadata(ProtocolDownloadMetadata),
+    OperationDone(ProtocolOperationDone),
 }
 
 pub async fn get_init_header_from_stream(rx: &mut RecvStream) -> Result<Header, Error> {
-    let mut init_buffer = Vec::with_capacity(DEFAULT_INIT_BUF_SIZE);
+    let mut init_buffer = Vec::with_capacity(DEFAULT_PROTOCOL_BUF_SIZE);
     let n = rx.read_buf(&mut init_buffer).await?;
     if n == 0 {
         return Err(Error::Connection("broken pipe".to_string()));
@@ -34,6 +35,9 @@ pub struct ProtocolUploadHeader {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProtocolUploadReady;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProtocolOperationDone;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProtocolRequestDownloadHeader {

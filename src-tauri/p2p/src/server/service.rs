@@ -1,6 +1,6 @@
 use crate::consts::{DEFAULT_FILE_READ_SIZE, DEFAULT_STREAM_READ_BUF_SIZE};
 use crate::error::Error;
-use crate::types::{Header, ProtocolDownloadMetadata, ProtocolUploadHeader, ProtocolUploadReady};
+use crate::types::{Header, ProtocolDownloadMetadata, ProtocolOperationDone, ProtocolUploadHeader, ProtocolUploadReady};
 
 use quinn::{RecvStream, SendStream};
 use std::path::Path;
@@ -42,23 +42,27 @@ pub async fn handshake(
 
 pub async fn handle_upload_file(
     mut rx: RecvStream,
+    mut tx: SendStream,
     file: Option<File>,
     _protocol_upload_header: ProtocolUploadHeader,
 ) -> Result<(), Error> {
     println!("[server] handling upload file");
-    let mut file = file.ok_or(Error::File("invalid file: cannot write".to_string()))?;
     let mut read = 0;
+    let mut file = file.ok_or(Error::File("invalid file: cannot write".to_string()))?;
     let mut buffer = Vec::with_capacity(DEFAULT_STREAM_READ_BUF_SIZE);
 
     while let Ok(n) = rx.read_buf(&mut buffer).await {
         read += n;
+        println!("[server] read: {}", read);
         if n == 0 {
             return Err(Error::Connection("[server] broken pipe".to_string()));
         }
-        println!("[server] read: {}", read);
-        file.write_all(&buffer[..n]).await?;
+        file.write(&buffer[..n]).await?;
         buffer.clear();
     }
+
+    println!("[server] upload done");
+    let _ = tx.write(&bincode::serialize(&Header::OperationDone(ProtocolOperationDone)).unwrap()).await;
 
     Ok(())
 }

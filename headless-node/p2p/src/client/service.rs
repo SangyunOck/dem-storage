@@ -64,7 +64,6 @@ async fn read_file_and_write_to_stream(
     offset: u64,
     mut tx: SendStream,
 ) -> Result<(), Error> {
-    println!("[client] trying to read file and write to stream");
     file.seek(SeekFrom::Start(offset)).await?;
 
     let mut buffer = Vec::with_capacity(DEFAULT_FILE_READ_SIZE);

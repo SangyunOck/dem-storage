@@ -1,4 +1,4 @@
-use crate::consts::{DEFAULT_FILE_READ_SIZE, DEFAULT_STREAM_READ_BUF_SIZE};
+use crate::consts::{DEFAULT_FILE_READ_SIZE, DEFAULT_PROTOCOL_BUF_SIZE, DEFAULT_STREAM_READ_BUF_SIZE};
 use crate::error::Error;
 use crate::types::{
     get_init_header_from_stream, DownloadFileRequest, Header, ProtocolDownloadMetadata,
@@ -54,7 +54,15 @@ pub async fn upload_file(
     )
     .await?;
 
-    Ok(())
+    let mut buf = Vec::with_capacity(DEFAULT_PROTOCOL_BUF_SIZE);
+
+    loop {
+        let _ = rx.read_buf(&mut buf);
+        if let Header::OperationDone(_) = bincode::deserialize::<Header>(&buf)? {
+            return Ok(());
+        }
+        buf.clear();
+    }
 }
 
 async fn read_file_and_write_to_stream(
@@ -64,17 +72,11 @@ async fn read_file_and_write_to_stream(
     offset: u64,
     mut tx: SendStream,
 ) -> Result<(), Error> {
-    println!("[client] trying to read file and write to stream");
     file.seek(SeekFrom::Start(offset)).await?;
 
     let mut buffer = Vec::with_capacity(DEFAULT_FILE_READ_SIZE);
     let mut nonce = 0;
     while let Ok(n) = file.read_buf(&mut buffer).await {
-        if n == 0 {
-            println!("[client] send to stream done: {:?}", file);
-            break;
-        }
-
         let target = n.min(len);
         println!("left to send: {len}");
         let encrypted = crypto::encrypt_aes_256(
@@ -97,7 +99,7 @@ async fn read_file_and_write_to_stream(
         len -= n;
     }
 
-    Ok(())
+    Err(Error::Internal("cannot finish job".to_string()))
 }
 
 pub async fn download_file(

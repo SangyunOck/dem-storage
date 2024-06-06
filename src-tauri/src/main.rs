@@ -36,7 +36,7 @@ async fn upload_handler<'a>(
     // let peers = get_available_nodes(router_server_url).await.unwrap();
 
     let peers = vec![Node {
-        endpoint: "192.168.238.130:8080".to_string(),
+        endpoint: "192.168.238.241:8080".to_string(),
         peer_id: "node_1".to_string(),
     }];
 
@@ -100,6 +100,7 @@ async fn download_handler<'a>(
     }];
 
     let mut download_handles = vec![];
+    println!("{:?}", UPLOADS.lock().unwrap().iter().collect::<Vec<_>>());
     for sc in get_node_combinations(peers).await {
         let (index, offset) = UPLOADS
             .lock()

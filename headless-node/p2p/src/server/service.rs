@@ -56,7 +56,7 @@ pub async fn handle_upload_file(
             return Err(Error::Connection("[server] broken pipe".to_string()));
         }
         println!("[server] read: {}", read);
-        file.write_all(&buffer[..n]).await?;
+        file.write(&buffer[..n]).await?;
         buffer.clear();
     }
 
