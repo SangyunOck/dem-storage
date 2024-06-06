@@ -55,7 +55,7 @@ impl Node {
                     .max_idle_timeout(Some(IdleTimeout::from(VarInt::from_u32(30_000))));
                 transport_config.stream_receive_window(VarInt::MAX);
                 transport_config.receive_window(VarInt::MAX);
-                transport_config.send_window(u64::MAX);
+                transport_config.send_window(500_000);
             },
             addr.parse().unwrap(),
         )?;

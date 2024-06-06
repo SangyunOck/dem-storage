@@ -36,7 +36,7 @@ async fn upload_handler<'a>(
     // let peers = get_available_nodes(router_server_url).await.unwrap();
 
     let peers = vec![Node {
-        endpoint: "127.0.0.1:8080".to_string(),
+        endpoint: "172.30.1.35:8080".to_string(),
         peer_id: "node_1".to_string(),
     }];
 
@@ -95,7 +95,7 @@ async fn download_handler<'a>(
     // let peers = get_available_nodes(router_server_url).await.unwrap();
 
     let peers = vec![Node {
-        endpoint: "127.0.0.1:8080".to_string(),
+        endpoint: "172.30.1.35:8080".to_string(),
         peer_id: "node_1".to_string(),
     }];
 

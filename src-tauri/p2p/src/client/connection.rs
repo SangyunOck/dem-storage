@@ -33,7 +33,7 @@ impl ClientEndpoint {
             transport_config
                 .receive_window(VarInt::MAX)
                 .stream_receive_window(VarInt::MAX)
-                .send_window(u64::MAX)
+                .send_window(500_000)
         );
         client_config.transport_config(transport_config);
         endpoint.set_default_client_config(client_config);
