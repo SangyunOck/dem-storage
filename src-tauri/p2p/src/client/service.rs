@@ -210,7 +210,7 @@ async fn read_from_stream_and_write_file(
             }
         }
     }
-    // tokio::fs::remove_file(&encrypted_path).await?;
+    tokio::fs::remove_file(&encrypted_path).await?;
 
     Ok(())
 }
