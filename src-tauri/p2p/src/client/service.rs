@@ -58,10 +58,11 @@ pub async fn upload_file(
 
     loop {
         let _ = rx.read_buf(&mut buf);
-        if let Header::OperationDone(_) = bincode::deserialize::<Header>(&buf)? {
+        if let Ok(Header::OperationDone(_)) = bincode::deserialize::<Header>(&buf) {
             return Ok(());
         }
         buf.clear();
+        tokio::time::sleep(Duration::from_secs(1)).await;
     }
 }
 
