@@ -27,28 +27,24 @@ fn adjust_key(mut key: Vec<u8>) -> [u8; AES_256_KEY_SIZE] {
     key.try_into().unwrap()
 }
 pub async fn encrypt_aes_256(key: Vec<u8>, mut data: Vec<u8>, nonce: u64) -> Result<Vec<u8>, Error> {
-    let cipher = tokio::task::spawn_blocking(move || {
+    tokio::task::spawn_blocking(move || {
         let key = adjust_key(key);
         // safety: already checked size
         let mut key = SealingKey::new(UnboundKey::new(&AES_256_GCM, &key).unwrap(), Nonce(nonce));
         key.seal_in_place_append_tag(Aad::empty(), &mut data)
             .map_err(|e| Error::Encrypt(e.to_string()))?;
-        data.to_vec()
-    }).await?;
-
-    Ok(cipher)
+        Ok(data.to_vec())
+    }).await.map_err(|_| Error::Encrypt("cannot join thread".to_string()))?
 }
 
 pub async fn decrypt_aes_256(key: Vec<u8>, mut data: Vec<u8>, nonce: u64) -> Result<Vec<u8>, Error> {
-    let plain = tokio::task::spawn_blocking(move || {
+    tokio::task::spawn_blocking(move || {
         let key = adjust_key(key);
         let mut key = OpeningKey::new(UnboundKey::new(&AES_256_GCM, &key).unwrap(), Nonce(nonce));
         key.open_in_place(Aad::empty(), &mut data)
             .map_err(|e| Error::Decrypt(e.to_string()))?;
-        data[..data.len() - AES_256_TAG_SIZE].to_vec()
-    }).await?;
-
-    Ok(plain)
+        Ok(data[..data.len() - AES_256_TAG_SIZE].to_vec())
+    }).await.map_err(|_| Error::Decrypt("cannot join thread".to_string()))?
 }
 
 struct Nonce(u64);

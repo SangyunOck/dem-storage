@@ -1,4 +1,4 @@
-use crate::consts::{DEFAULT_FILE_READ_SIZE, DEFAULT_PROTOCOL_BUF_SIZE, DEFAULT_STREAM_READ_BUF_SIZE};
+use crate::consts::{DEFAULT_FILE_READ_SIZE, DEFAULT_STREAM_READ_BUF_SIZE};
 use crate::error::Error;
 use crate::types::{
     get_init_header_from_stream, DownloadFileRequest, Header, ProtocolDownloadMetadata,
