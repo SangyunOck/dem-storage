@@ -85,3 +85,6 @@ server/kotlin-native/dist
 server/kotlin-ide/
 server/.kotlin/
 server/.teamcity/
+
+# rust
+**/target

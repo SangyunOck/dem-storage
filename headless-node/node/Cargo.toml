@@ -1,0 +1,9 @@
+[package]
+name = "node"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+eyre = "0.6.12"
+p2p = { path = "../p2p" }
+tokio = { workspace = true }

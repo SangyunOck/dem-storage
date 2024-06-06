@@ -3,15 +3,15 @@
 
 mod prepare;
 
+use crate::prepare::get_available_nodes;
+
 use once_cell::sync::Lazy;
 use p2p::scheduler::get_scheduled_chunks;
-use p2p::types::Node;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tauri::State;
 use tokio::sync::mpsc::unbounded_channel;
-use crate::prepare::get_available_nodes;
 
 static UPLOADS: Lazy<Mutex<BTreeMap<String, (u8, u64)>>> =
     Lazy::new(|| Mutex::new(BTreeMap::new()));
