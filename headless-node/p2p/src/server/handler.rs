@@ -21,7 +21,7 @@ pub async fn run_server_handler(
     // initialize done
     match header {
         Header::UploadRequestHeader(upload_header) => {
-            handle_upload_file(rx, file, upload_header).await?
+            handle_upload_file(rx, tx, file, upload_header).await?
         }
         Header::DownloadRequestHeader(..) => handle_download_file(tx, file).await?,
         _ => {}

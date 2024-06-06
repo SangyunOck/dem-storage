@@ -53,6 +53,9 @@ impl Node {
                 transport_config.keep_alive_interval(Some(Duration::from_secs(10)));
                 transport_config
                     .max_idle_timeout(Some(IdleTimeout::from(VarInt::from_u32(30_000))));
+                transport_config.stream_receive_window(VarInt::MAX);
+                transport_config.receive_window(VarInt::MAX);
+                transport_config.send_window(u64::MAX);
             },
             addr.parse().unwrap(),
         )?;

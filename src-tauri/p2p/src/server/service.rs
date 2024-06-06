@@ -57,7 +57,7 @@ pub async fn handle_upload_file(
         if n == 0 {
             break;
         }
-        file.write(&buffer[..n]).await?;
+        file.write_all(&buffer[..n]).await?;
         file.flush().await?;
         buffer.clear();
     }
@@ -78,7 +78,7 @@ pub async fn handle_download_file(mut tx: SendStream, file: Option<File>) -> Res
         if n == 0 {
             return Ok(());
         }
-        tx.write(&buffer[..n]).await?;
+        tx.write_all(&buffer[..n]).await?;
         println!("[server] write: {}", n);
         buffer.clear();
     }

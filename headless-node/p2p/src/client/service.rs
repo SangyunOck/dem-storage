@@ -1,4 +1,4 @@
-use crate::consts::{DEFAULT_FILE_READ_SIZE, DEFAULT_STREAM_READ_BUF_SIZE};
+use crate::consts::{DEFAULT_FILE_READ_SIZE, DEFAULT_SERVER_DOWNLOAD_CHUNK, DEFAULT_STREAM_READ_BUF_SIZE};
 use crate::error::Error;
 use crate::types::{
     get_init_header_from_stream, DownloadFileRequest, Header, ProtocolDownloadMetadata,
@@ -51,6 +51,7 @@ pub async fn upload_file(
         upload_file_request.len as usize,
         upload_file_request.offset,
         tx,
+        rx
     )
     .await?;
 
@@ -63,6 +64,7 @@ async fn read_file_and_write_to_stream(
     mut len: usize,
     offset: u64,
     mut tx: SendStream,
+    mut rx: RecvStream,
 ) -> Result<(), Error> {
     file.seek(SeekFrom::Start(offset)).await?;
 
@@ -80,12 +82,12 @@ async fn read_file_and_write_to_stream(
             password.as_bytes().to_vec(),
             buffer[..target].to_vec(),
             nonce,
-        )?;
+        ).await?;
 
         // TODO: read only for len
         // TODO: CAUTION - consider length after encryption
         println!("sending {}", encrypted.len());
-        tx.write(&encrypted).await?;
+        tx.write_all(&encrypted).await?;
         buffer.clear();
 
         if len < n {
@@ -96,6 +98,7 @@ async fn read_file_and_write_to_stream(
         len -= n;
     }
 
+    buffer.clear();
     Ok(())
 }
 
@@ -170,7 +173,7 @@ async fn read_from_stream_and_write_file(
         .seek(SeekFrom::Start(protocol_download_metadata.offset))
         .await?;
 
-    let mut buffer = Vec::with_capacity(DEFAULT_STREAM_READ_BUF_SIZE);
+    let mut buffer = Vec::with_capacity(DEFAULT_SERVER_DOWNLOAD_CHUNK);
 
     while let Ok(n) = rx.read_buf(&mut buffer).await {
         println!("[client] read: {n}");
@@ -194,7 +197,7 @@ async fn read_from_stream_and_write_file(
             println!("[client] decryption done");
             break;
         }
-        match decrypt_aes_256(password.as_bytes().to_vec(), buffer[..n].to_vec(), nonce) {
+        match decrypt_aes_256(password.as_bytes().to_vec(), buffer[..n].to_vec(), nonce).await {
             Ok(plain) => {
                 let _ = plain_file.write(&plain).await?;
                 nonce += 1;
