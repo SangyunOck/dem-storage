@@ -51,19 +51,11 @@ pub async fn upload_file(
         upload_file_request.len as usize,
         upload_file_request.offset,
         tx,
+        rx
     )
     .await?;
 
-    let mut buf = Vec::with_capacity(DEFAULT_PROTOCOL_BUF_SIZE);
-
-    loop {
-        let _ = rx.read_buf(&mut buf);
-        if let Ok(Header::OperationDone(_)) = bincode::deserialize::<Header>(&buf) {
-            return Ok(());
-        }
-        buf.clear();
-        tokio::time::sleep(Duration::from_secs(1)).await;
-    }
+    Ok(())
 }
 
 async fn read_file_and_write_to_stream(
@@ -72,12 +64,18 @@ async fn read_file_and_write_to_stream(
     mut len: usize,
     offset: u64,
     mut tx: SendStream,
+    mut rx: RecvStream,
 ) -> Result<(), Error> {
     file.seek(SeekFrom::Start(offset)).await?;
 
     let mut buffer = Vec::with_capacity(DEFAULT_FILE_READ_SIZE);
     let mut nonce = 0;
     while let Ok(n) = file.read_buf(&mut buffer).await {
+        if n == 0 {
+            println!("[client] send to stream done: {:?}", file);
+            break;
+        }
+
         let target = n.min(len);
         println!("left to send: {len}");
         let encrypted = crypto::encrypt_aes_256(
@@ -100,7 +98,22 @@ async fn read_file_and_write_to_stream(
         len -= n;
     }
 
-    Err(Error::Internal("cannot finish job".to_string()))
+    buffer.clear();
+
+    let mut count = 0;
+    loop {
+        let _ = rx.read_buf(&mut buffer);
+        println!("{:?}", buffer);
+        if let Ok(Header::OperationDone(_)) = bincode::deserialize::<Header>(&buffer) {
+            return Ok(());
+        }
+        buffer.clear();
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        count += 1;
+        if count == 5 {
+            return Err(Error::Internal("cannot complete job".to_string()));
+        }
+    }
 }
 
 pub async fn download_file(

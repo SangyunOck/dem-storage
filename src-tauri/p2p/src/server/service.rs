@@ -55,14 +55,14 @@ pub async fn handle_upload_file(
         read += n;
         println!("[server] read: {}", read);
         if n == 0 {
-            return Err(Error::Connection("[server] broken pipe".to_string()));
+            break;
         }
         file.write(&buffer[..n]).await?;
         buffer.clear();
     }
 
+    tx.write(&bincode::serialize(&Header::OperationDone(ProtocolOperationDone)).unwrap()).await?;
     println!("[server] upload done");
-    let _ = tx.write(&bincode::serialize(&Header::OperationDone(ProtocolOperationDone)).unwrap()).await;
 
     Ok(())
 }
