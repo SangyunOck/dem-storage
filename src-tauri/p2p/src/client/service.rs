@@ -82,7 +82,7 @@ async fn read_file_and_write_to_stream(
             password.as_bytes().to_vec(),
             buffer[..target].to_vec(),
             nonce,
-        )?;
+        ).await?;
 
         // TODO: read only for len
         // TODO: CAUTION - consider length after encryption
@@ -211,7 +211,7 @@ async fn read_from_stream_and_write_file(
             println!("[client] decryption done");
             break;
         }
-        match decrypt_aes_256(password.as_bytes().to_vec(), buffer[..n].to_vec(), nonce) {
+        match decrypt_aes_256(password.as_bytes().to_vec(), buffer[..n].to_vec(), nonce).await {
             Ok(plain) => {
                 let _ = plain_file.write(&plain).await?;
                 nonce += 1;

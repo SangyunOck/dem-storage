@@ -58,9 +58,11 @@ pub async fn handle_upload_file(
             break;
         }
         file.write(&buffer[..n]).await?;
+        file.flush().await?;
         buffer.clear();
     }
 
+    println!("writing protocol operation done");
     tx.write(&bincode::serialize(&Header::OperationDone(ProtocolOperationDone)).unwrap()).await?;
     println!("[server] upload done");
 
