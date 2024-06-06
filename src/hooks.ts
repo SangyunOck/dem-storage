@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { useDispatch } from "react-redux";
+import _ from "underscore";
 import { listen, UnlistenFn } from "@tauri-apps/api/event";
 
 import { setProgress as setUpProgress } from "./redux/slices/uploadSlice.ts";
@@ -7,13 +8,17 @@ import {
   addFile,
   setProgress as setDownProgress,
 } from "./redux/slices/downloadSlice.ts";
-import {FileProgressType, uploadEventPayload} from "./redux/types.ts";
+import { FileProgressType, uploadEventPayload } from "./redux/types.ts";
 
 export const EventListeners = () => {
   const dispatch = useDispatch();
   const downloadProgressListener = useRef<UnlistenFn | null>(null);
   const uploadProgressListener = useRef<UnlistenFn | null>(null);
   const uploadedFileListener = useRef<UnlistenFn | null>(null);
+
+  const updateUploadResult = _.debounce((fileName: string) => {
+    dispatch(addFile(fileName));
+  }, 500);
 
   const startListeners = async () => {
     downloadProgressListener.current = await listen<FileProgressType>(
@@ -31,7 +36,7 @@ export const EventListeners = () => {
     uploadedFileListener.current = await listen<uploadEventPayload>(
       "upload-result",
       (e) => {
-        dispatch(addFile(e.payload.file_name));
+        updateUploadResult(e.payload.file_name);
       },
     );
   };
