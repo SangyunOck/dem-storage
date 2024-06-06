@@ -44,14 +44,27 @@ const downloadSlice = createSlice({
   name: "downloadFiles",
   initialState: initState,
   reducers: {
-    addFile: (state, action: PayloadAction<fileType>) => {
+    addFile: (state, action: PayloadAction<string>) => {
+      state.value.files = [...state.value.files];
       state.value.files.push({
-        file: action.payload,
+        file: {
+          path: "123",
+          name: action.payload,
+        },
         isCompleted: false,
         isInProgress: false,
         progress: 0,
       });
       state.value.len += 1;
+    },
+    addFiles: (state, action: PayloadAction<fileType[]>) => {
+      const newFiles: downloadFileSliceType[] = action.payload.map((item) => ({
+        file: item,
+        isCompleted: false,
+        isInProgress: false,
+        progress: 0,
+      }));
+      state.value.files = state.value.files.concat(newFiles);
     },
     deleteFile: (state, action: PayloadAction<fileType>) => {
       const { name, path } = action.payload;
@@ -107,6 +120,7 @@ const downloadSlice = createSlice({
 
 export const {
   addFile,
+  addFiles,
   setFiles,
   deleteFile,
   changeSortType,

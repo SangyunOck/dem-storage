@@ -15,7 +15,7 @@ import Login from "./routes/Login.tsx";
 import Signup, { signupAction } from "./routes/Signup.tsx";
 import MemberLayout from "./layouts/MemberLayout.tsx";
 import NewMember from "./routes/NewMember.tsx";
-import MainLayout from "./layouts/MainLayout.tsx";
+import MainLayout, { registerPeer } from "./layouts/MainLayout.tsx";
 import MyFiles from "./routes/MyFiles.tsx";
 import Settings from "./routes/Settings.tsx";
 
@@ -42,6 +42,7 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <MainLayout />,
+    loader: registerPeer,
     children: [
       {
         path: "",

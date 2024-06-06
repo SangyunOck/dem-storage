@@ -1,5 +1,4 @@
 import { useCallback, useState, MouseEvent, useMemo } from "react";
-
 import {
   Badge,
   Box,
@@ -10,6 +9,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { Upload } from "@mui/icons-material";
+import { cyan } from "@mui/material/colors";
 import _ from "underscore";
 
 import { useAppSelector } from "../redux/store.ts";
@@ -17,6 +17,7 @@ import { CustomButtonBase, ScrollBox } from "./styles.tsx";
 import UploadFileListItem from "./UploadFileListItem.tsx";
 
 function ButtonIcon() {
+  const theme = useTheme();
   const files = useAppSelector((state) => state.upload.value.files);
 
   const unCompletedFiles = files.filter((f) => !f.isCompleted);
@@ -26,8 +27,14 @@ function ButtonIcon() {
     <Box>
       <Badge
         badgeContent={unCheckedFiles.length}
-        color={"info"}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        sx={{
+          "& .MuiBadge-badge": {
+            backgroundColor: cyan[700],
+            zIndex: 10,
+            color: theme.palette.text.primary,
+          },
+        }}
       >
         <Upload />
       </Badge>

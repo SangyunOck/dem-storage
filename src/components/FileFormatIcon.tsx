@@ -57,7 +57,13 @@ function FileFormatIcon(props: Props) {
           </div>
         </Badge>
       </Box>
-      <Typography variant={"overline"} sx={{ lineHeight: "initial" }}>
+      <Typography
+        variant={"overline"}
+        sx={{
+          lineHeight: "initial",
+          fontSize: `${Math.ceil(size / 3 + 1)}px`,
+        }}
+      >
         {format}
       </Typography>
     </ListItemIcon>

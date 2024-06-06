@@ -1,11 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import _ from "underscore";
+import { invoke } from "@tauri-apps/api/tauri";
 import { Box, Stack, useTheme, useMediaQuery } from "@mui/material";
 
 import SideBar from "../components/SideBar.tsx";
 import AddFileBtn from "../components/AddFileBtn.tsx";
 import UploadFileListBtn from "../components/UploadFileListBtn.tsx";
+import { EventListeners } from "../hooks.ts";
+
+export const registerPeer = async () => {
+  return await invoke("", {})
+    .then((r) => {
+      console.log(r);
+      return null;
+    })
+    .catch((e) => {
+      console.error(e);
+      return null;
+    });
+};
 
 function MainLayout() {
   const theme = useTheme();
@@ -13,6 +27,7 @@ function MainLayout() {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [isCompact, setIsCompact] = useState<boolean>(isSmall);
   const sidebarSize = isCompact ? 56 : 200;
+  const [startListeners, terminateListeners] = EventListeners();
 
   const toggleCompact = useCallback(() => setIsCompact((prev) => !prev), []);
 
@@ -28,9 +43,10 @@ function MainLayout() {
       30,
     );
     window.addEventListener("resize", getWindowSize);
-
+    startListeners();
     return () => {
       window.removeEventListener("resize", getWindowSize);
+      terminateListeners();
     };
   }, []);
 

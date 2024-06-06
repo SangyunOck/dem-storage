@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useDispatch } from "react-redux";
 import {
   ListItem,
@@ -9,36 +9,19 @@ import {
 } from "@mui/material";
 import { CheckCircle, Delete, Download } from "@mui/icons-material";
 import { motion, useIsPresent } from "framer-motion";
-import { Store } from "tauri-plugin-store-api";
 import { invoke } from "@tauri-apps/api/tauri";
 
-import { deleteFile, setProgress } from "../redux/slices/downloadSlice.ts";
+import { deleteFile } from "../redux/slices/downloadSlice.ts";
 import { downloadFileSliceType } from "../redux/types.ts";
-import { NodeType } from "./AddFileBtn.tsx";
 import { ListItemBase, ListItemFunctionButtonBase } from "./styles.tsx";
 import FileFormatIcon from "./FileFormatIcon.tsx";
 import FileTransferProgressBar from "./FileTransferProgressBar.tsx";
 import { useAppSelector } from "../redux/store.ts";
 
-type ChunkType = {
-  file_path: string;
-  chunk_size: number;
-  offset: number;
-  index: number;
-  total_size: number;
-};
-
-type ScheduledChunkType = {
-  node: NodeType;
-  chunk: ChunkType;
-};
-
 interface Props {
   listIdx: number;
   fileItem: downloadFileSliceType;
 }
-
-const store = new Store(".scheduled_nodes.dat");
 
 function FileNameTypo({ name }: { name: string }) {
   const searchInput = useAppSelector(
@@ -88,31 +71,14 @@ function FileListItem({ fileItem, listIdx }: Props) {
 
   const handleDownload = useCallback(() => {
     invoke("download_handler", {
-      downloadFilePath: file.path,
       downloadFileName: file.name,
     })
       .then((res) => console.log(res))
       .catch((err) => console.error(err));
-    // store.get<{ results: ScheduledChunkType[] }>(myFile.path).then((val) => {
-    //   val &&
-    //     invoke("download_handler", { downloadFilePath: val.results })
-    //       .then((res) => console.log(res))
-    //       .catch((err) => console.error(err));
-    // });
   }, []);
 
   const handleDelete = useCallback(() => {
     dispatch(deleteFile(file));
-    // store.delete(fileItem.path).then((r) => r);
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      dispatch(setProgress({ file: file, progress: progress + 10 }));
-    }, 1000);
-    return () => {
-      clearInterval(interval);
-    };
   }, []);
 
   return (

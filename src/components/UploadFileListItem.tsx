@@ -52,7 +52,11 @@ function UploadFileListItem(props: Props) {
           }
           secondary={
             !isCompleted && (
-              <FileTransferProgressBar value={progress} fontSize={"12px"} />
+              <FileTransferProgressBar
+                value={progress}
+                fontSize={"12px"}
+                sx={{ height: 4 }}
+              />
             )
           }
         />

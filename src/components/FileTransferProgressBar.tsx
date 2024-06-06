@@ -7,7 +7,7 @@ interface Props extends LinearProgressProps {
 }
 
 function FileTransferProgressBar(props: Props) {
-  const { value, fontSize = "12px" } = props;
+  const { value, fontSize = "13px" } = props;
   return (
     <Box sx={{ display: "flex", alignItems: "center" }}>
       <Box sx={{ width: "100%", mr: 1 }}>
