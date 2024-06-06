@@ -7,7 +7,7 @@ import {
   addFile,
   setProgress as setDownProgress,
 } from "./redux/slices/downloadSlice.ts";
-import { FileProgressType } from "./redux/types.ts";
+import {FileProgressType, uploadEventPayload} from "./redux/types.ts";
 
 export const EventListeners = () => {
   const dispatch = useDispatch();
@@ -28,10 +28,10 @@ export const EventListeners = () => {
         dispatch(setDownProgress(e.payload));
       },
     );
-    uploadedFileListener.current = await listen<string>(
-      "get_uploaded_files",
+    uploadedFileListener.current = await listen<uploadEventPayload>(
+      "upload-result",
       (e) => {
-        dispatch(addFile(e.payload));
+        dispatch(addFile(e.payload.file_name));
       },
     );
   };

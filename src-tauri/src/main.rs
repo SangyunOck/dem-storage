@@ -2,17 +2,20 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod prepare;
+mod types;
 
-use crate::prepare::get_available_nodes;
+use crate::types::UploadEventPayload;
 
 use once_cell::sync::Lazy;
 use p2p::scheduler::{get_node_combinations, get_scheduled_chunks};
+use p2p::types::Node;
+use proto::main_server_operations::main_server_operations_client::MainServerOperationsClient;
+use proto::main_server_operations::RegisterNodeRequest;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use tauri::State;
+use tauri::{State, Window};
 use tokio::sync::mpsc::unbounded_channel;
-use p2p::types::Node;
 
 // filename: (index, offset)
 static UPLOADS: Lazy<Mutex<BTreeMap<String, (u8, u64)>>> =
@@ -25,19 +28,17 @@ fn get_file_name(path: &str) -> String {
 
 #[tauri::command]
 async fn upload_handler<'a>(
-    // routing_server: State<'a, Arc<MainServerOperationsClient<tonic::transport::Channel>>>,
     node: State<'a, Arc<p2p::node::Node>>,
+    window: Window,
     upload_file_path: String,
-) -> Result<(), ()> {
+) -> Result<(), String> {
     // let router_server_url = std::env::var("ROUTER_SERVER").unwrap();
     // let peers = get_available_nodes(router_server_url).await.unwrap();
 
-    let peers = vec![
-        Node {
-            endpoint: "192.168.238.241:8080".to_string(),
-            peer_id: "node_1".to_string(),
-        }
-    ];
+    let peers = vec![Node {
+        endpoint: "192.168.238.241:8080".to_string(),
+        peer_id: "node_1".to_string(),
+    }];
 
     let mut upload_handles = vec![];
     for sc in get_scheduled_chunks(&upload_file_path, peers)
@@ -73,6 +74,15 @@ async fn upload_handler<'a>(
         t.await.unwrap();
     }
 
+    let _ = window
+        .emit(
+            "upload-result",
+            UploadEventPayload {
+                file_name: get_file_name(&upload_file_path),
+            },
+        )
+        .map_err(|e| e.to_string())?;
+
     Ok(())
 }
 
@@ -80,22 +90,17 @@ async fn upload_handler<'a>(
 async fn download_handler<'a>(
     node: State<'a, Arc<p2p::node::Node>>,
     download_file_name: String,
-) -> Result<(), ()> {
+) -> Result<(), String> {
     // let router_server_url = std::env::var("ROUTER_SERVER").unwrap();
     // let peers = get_available_nodes(router_server_url).await.unwrap();
 
-    let peers = vec![
-        Node {
-            endpoint: "192.168.238.241:8080".to_string(),
-            peer_id: "node_1".to_string(),
-        }
-    ];
+    let peers = vec![Node {
+        endpoint: "192.168.238.241:8080".to_string(),
+        peer_id: "node_1".to_string(),
+    }];
 
     let mut download_handles = vec![];
-    for sc in get_node_combinations(peers)
-        .await
-        .unwrap()
-    {
+    for sc in get_node_combinations(peers).await {
         let (index, offset) = UPLOADS
             .lock()
             .unwrap()
@@ -111,8 +116,8 @@ async fn download_handler<'a>(
                     index,
                     offset,
                 },
-                sc.node.endpoint.clone(),
-                sc.node.peer_id.clone(),
+                sc.endpoint.clone(),
+                sc.peer_id.clone(),
             )
             .await
             .unwrap();
@@ -126,11 +131,29 @@ async fn download_handler<'a>(
 }
 
 #[tauri::command]
-async fn get_uploaded_files<'a>() -> Vec<String> {
-    UPLOADS.lock().unwrap().iter()
+async fn get_uploaded_files<'a>() -> Result<Vec<String>, String> {
+    Ok(UPLOADS
+        .lock()
+        .unwrap()
+        .iter()
         .map(|i| i.0)
         .cloned()
-        .collect::<Vec<_>>()
+        .collect::<Vec<_>>())
+}
+
+#[tauri::command]
+async fn register_node<'a>(
+    mut routing_client: MainServerOperationsClient<tonic::transport::Channel>,
+) -> Result<(), String> {
+    routing_client
+        .register_node(RegisterNodeRequest {
+            node_ip: "".to_string(),
+            peer_id: "".to_string(),
+        })
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
 }
 
 #[tokio::main]
@@ -146,8 +169,8 @@ async fn main() -> eyre::Result<()> {
         std::env::var("CLIENT_BASE_PATH").unwrap_or("./client-storage".to_string());
 
     // let routing_server_url = std::env::var("ROUTING_SERVER").expect("router server env not found");
-    // let router_client = Arc::new(MainServerOperationsClient::connect(routing_server_url)
-    //     .await?);
+    // let router_client = MainServerOperationsClient::connect(routing_server_url)
+    //     .await?;
 
     let node = Arc::new(p2p::node::Node::new(
         "node".to_string(),

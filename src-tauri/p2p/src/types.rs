@@ -101,7 +101,7 @@ impl From<AvailableNodes> for Node {
     fn from(value: AvailableNodes) -> Self {
         Self {
             peer_id: value.peer_id,
-            endpoint: value.ip_address
+            endpoint: value.ip_address,
         }
     }
 }

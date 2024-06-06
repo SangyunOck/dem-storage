@@ -61,9 +61,7 @@ pub async fn get_scheduled_chunks(
     Ok(scheduled_chunk)
 }
 
-pub async fn get_node_combinations(
-    nodes: Vec<Node>,
-) -> Vec<Node> {
+pub async fn get_node_combinations(nodes: Vec<Node>) -> Vec<Node> {
     let node_len = nodes.len();
     nodes
         .into_iter()

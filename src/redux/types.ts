@@ -33,3 +33,7 @@ export type userSliceType = {
   password: string | null;
   isAuthenticated: boolean;
 };
+
+export type uploadEventPayload = {
+  file_name: string;
+}

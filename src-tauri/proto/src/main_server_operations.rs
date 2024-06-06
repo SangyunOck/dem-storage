@@ -13,8 +13,8 @@ pub struct RegisterNodeResponse {}
 /// Generated client implementations.
 pub mod main_server_operations_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct MainServerOperationsClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -58,9 +58,8 @@ pub mod main_server_operations_client {
                     <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-            >>::Error: Into<StdError> + Send + Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
         {
             MainServerOperationsClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -98,23 +97,16 @@ pub mod main_server_operations_client {
         pub async fn register_node(
             &mut self,
             request: impl tonic::IntoRequest<super::RegisterNodeRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::RegisterNodeResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::RegisterNodeResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/MainServerOperations/RegisterNode",
-            );
+            let path = http::uri::PathAndQuery::from_static("/MainServerOperations/RegisterNode");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("MainServerOperations", "RegisterNode"));
@@ -132,10 +124,7 @@ pub mod main_server_operations_server {
         async fn register_node(
             &self,
             request: tonic::Request<super::RegisterNodeRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::RegisterNodeResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::RegisterNodeResponse>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct MainServerOperationsServer<T: MainServerOperations> {
@@ -160,10 +149,7 @@ pub mod main_server_operations_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -198,8 +184,7 @@ pub mod main_server_operations_server {
             self
         }
     }
-    impl<T, B> tonic::codegen::Service<http::Request<B>>
-    for MainServerOperationsServer<T>
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for MainServerOperationsServer<T>
     where
         T: MainServerOperations,
         B: Body + Send + 'static,
@@ -220,23 +205,19 @@ pub mod main_server_operations_server {
                 "/MainServerOperations/RegisterNode" => {
                     #[allow(non_camel_case_types)]
                     struct RegisterNodeSvc<T: MainServerOperations>(pub Arc<T>);
-                    impl<
-                        T: MainServerOperations,
-                    > tonic::server::UnaryService<super::RegisterNodeRequest>
-                    for RegisterNodeSvc<T> {
+                    impl<T: MainServerOperations>
+                        tonic::server::UnaryService<super::RegisterNodeRequest>
+                        for RegisterNodeSvc<T>
+                    {
                         type Response = super::RegisterNodeResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::RegisterNodeRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as MainServerOperations>::register_node(&inner, request)
-                                    .await
+                                <T as MainServerOperations>::register_node(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -264,18 +245,14 @@ pub mod main_server_operations_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        Ok(
-                            http::Response::builder()
-                                .status(200)
-                                .header("grpc-status", "12")
-                                .header("content-type", "application/grpc")
-                                .body(empty_body())
-                                .unwrap(),
-                        )
-                    })
-                }
+                _ => Box::pin(async move {
+                    Ok(http::Response::builder()
+                        .status(200)
+                        .header("grpc-status", "12")
+                        .header("content-type", "application/grpc")
+                        .body(empty_body())
+                        .unwrap())
+                }),
             }
         }
     }
@@ -301,8 +278,7 @@ pub mod main_server_operations_server {
             write!(f, "{:?}", self.0)
         }
     }
-    impl<T: MainServerOperations> tonic::server::NamedService
-    for MainServerOperationsServer<T> {
+    impl<T: MainServerOperations> tonic::server::NamedService for MainServerOperationsServer<T> {
         const NAME: &'static str = "MainServerOperations";
     }
 }
